@@ -1,4 +1,114 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion }   from "framer-motion";
+
+const SEVERITY_CFG = {
+  critical: { icon: "\u2715", bg: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  color: "#f87171",        label: "Critical" },
+  warning:  { icon: "\u26a0", bg: "rgba(245,158,11,0.07)", border: "rgba(245,158,11,0.20)", color: "var(--warning)", label: "Warning"  },
+  info:     { icon: "\u25c8", bg: "rgba(99,179,237,0.06)", border: "rgba(99,179,237,0.16)", color: "#63b3ed",        label: "Info"     },
+  success:  { icon: "\u2713", bg: "rgba(74,222,128,0.06)", border: "rgba(74,222,128,0.16)", color: "var(--success)", label: "Good"     },
+};
+
+function InsightRow({ insight, i }) {
+  const cfg = SEVERITY_CFG[insight.severity] || SEVERITY_CFG.info;
+  return (
+    <motion.div
+      className="dash-insight-row"
+      style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: i * 0.05, duration: 0.26 }}
+    >
+      <div className="dash-insight-row__icon" style={{ color: cfg.color }}>{cfg.icon}</div>
+      <div className="dash-insight-row__body">
+        <div className="dash-insight-row__title" style={{ color: cfg.color }}>{insight.title}</div>
+        <div className="dash-insight-row__text">{insight.text}</div>
+      </div>
+      <div className="dash-insight-row__badge" style={{ color: cfg.color, borderColor: cfg.border }}>
+        {cfg.label}
+      </div>
+    </motion.div>
+  );
+}
+
+function PriorityInsightsCard({ insights, recommendations }) {
+  const [recsExpanded, setRecsExpanded] = useState(false);
+  if (!insights?.length && !recommendations?.length) return null;
+
+  const problems  = (insights || []).filter(i => i.severity === "critical" || i.severity === "warning");
+  const positives = (insights || []).filter(i => i.severity === "success");
+  const infos     = (insights || []).filter(i => i.severity === "info");
+  const highRecs  = (recommendations || []).filter(r => r.priority === "high");
+  const shownRecs = recsExpanded ? (recommendations || []) : (recommendations || []).slice(0, 4);
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26, duration: 0.38 }}>
+
+      {insights?.length > 0 && (
+        <div className="dash-card" style={{ marginBottom: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+            <div className="dash-section-title" style={{ marginBottom: 0 }}>Priority Insights</div>
+            <div style={{ display: "flex", gap: "6px" }}>
+              {problems.filter(i => i.severity === "critical").length > 0 && (
+                <span className="dash-count-badge dash-count-badge--critical">{problems.filter(i => i.severity === "critical").length} critical</span>
+              )}
+              {problems.filter(i => i.severity === "warning").length > 0 && (
+                <span className="dash-count-badge dash-count-badge--warning">{problems.filter(i => i.severity === "warning").length} warnings</span>
+              )}
+            </div>
+          </div>
+          {problems.length > 0 && (
+            <div style={{ marginBottom: "14px" }}>
+              <div className="dash-insights-group__label">Issues to address</div>
+              <div className="dash-insights-group__list">{problems.map((ins, i) => <InsightRow key={i} insight={ins} i={i} />)}</div>
+            </div>
+          )}
+          {infos.length > 0 && (
+            <div style={{ marginBottom: "14px" }}>
+              <div className="dash-insights-group__label">Observations</div>
+              <div className="dash-insights-group__list">{infos.map((ins, i) => <InsightRow key={i} insight={ins} i={i} />)}</div>
+            </div>
+          )}
+          {positives.length > 0 && (
+            <div>
+              <div className="dash-insights-group__label">Strengths</div>
+              <div className="dash-insights-group__list">{positives.map((ins, i) => <InsightRow key={i} insight={ins} i={i} />)}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {recommendations?.length > 0 && (
+        <div className="dash-card" style={{ marginBottom: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+            <div className="dash-section-title" style={{ marginBottom: 0 }}>Recommendations</div>
+            {highRecs.length > 0 && <span className="dash-count-badge dash-count-badge--critical">{highRecs.length} high priority</span>}
+          </div>
+          <div className="dash-recs-list">
+            {shownRecs.map((rec, i) => {
+              const pColor = rec.priority === "high" ? "#f87171" : rec.priority === "medium" ? "var(--warning)" : "rgba(255,255,255,0.35)";
+              return (
+                <motion.div key={i} className="dash-rec-row" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05, duration: 0.26 }}>
+                  <div className="dash-rec-row__header">
+                    <span className="dash-rec-row__category">{rec.category}</span>
+                    {rec.column && <span className="dash-rec-row__col">&quot;{rec.column}&quot;</span>}
+                    <span className="dash-rec-row__priority" style={{ color: pColor }}>{rec.priority}</span>
+                  </div>
+                  <div className="dash-rec-row__issue">{rec.issue}</div>
+                  <div className="dash-rec-row__action">{rec.action}</div>
+                </motion.div>
+              );
+            })}
+          </div>
+          {(recommendations || []).length > 4 && (
+            <button className="dash-recs-toggle" onClick={() => setRecsExpanded(!recsExpanded)}>
+              {recsExpanded ? "Show less" : `Show ${recommendations.length - 4} more recommendation${recommendations.length - 4 > 1 ? "s" : ""}`}
+            </button>
+          )}
+        </div>
+      )}
+    </motion.div>
+  );
+}
 
 /* ─────────────────────────────────────────────
    COLUMN ROLE PILL
@@ -307,17 +417,86 @@ function ColumnRoleList({ meta }) {
   );
 }
 
+
 /* ─────────────────────────────────────────────
-   OVERVIEW TAB
+   HEALTH SCORE CARD — shown in Overview
 ───────────────────────────────────────────── */
+function HealthScoreCard({ healthScore }) {
+  if (!healthScore) return null;
+
+  const { score, grade, breakdown, hasTarget } = healthScore;
+
+  const scoreColor =
+    score >= 90 ? "var(--success)"     :
+    score >= 75 ? "#63b3ed"            :
+    score >= 60 ? "var(--warning)"     :
+    score >= 40 ? "rgba(251,146,60,1)" : "#f87171";
+
+  const dims = [
+    { key: "quality",         label: "Quality"       },
+    { key: "structure",       label: "Structure"     },
+    { key: "relationships",   label: "Relationships" },
+    { key: "targetReadiness", label: "Target Ready"  },
+  ].filter(d => hasTarget || d.key !== "targetReadiness");
+
+  return (
+    <motion.div
+      className="dash-card dash-card--gold"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.07, duration: 0.35 }}
+      style={{ marginBottom: "14px" }}
+    >
+      <div className="dash-section-title">Dataset Health Score</div>
+      <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>
+
+        {/* Score */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: "80px" }}>
+          <div style={{ fontSize: "40px", fontWeight: "900", letterSpacing: "-0.05em", lineHeight: 1, color: scoreColor }}>
+            {score}
+          </div>
+          <div style={{ fontSize: "12px", fontWeight: "700", color: scoreColor, marginTop: "4px" }}>{grade}</div>
+          <div style={{ fontSize: "9px", fontWeight: "600", color: "rgba(255,255,255,0.22)", textTransform: "uppercase", letterSpacing: "0.12em", marginTop: "3px" }}>Health Score</div>
+        </div>
+
+        {/* Breakdown */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "9px" }}>
+          {dims.map((d, i) => {
+            const val = breakdown[d.key] ?? 0;
+            const barColor = val >= 80 ? "var(--success)" : val >= 60 ? "var(--warning)" : "#f87171";
+            return (
+              <motion.div key={d.key} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.12 + i * 0.06, duration: 0.28 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: "600", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.10em" }}>{d.label}</span>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: barColor }}>{val}</span>
+                </div>
+                <div style={{ height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden" }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${val}%` }}
+                    transition={{ delay: 0.16 + i * 0.06, duration: 0.55, ease: "easeOut" }}
+                    style={{ height: "100%", borderRadius: "2px", background: barColor }}
+                  />
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function OverviewTab({ result }) {
-  const { meta, snapshot } = result;
+  const { meta, snapshot, healthScore, insights, recommendations } = result;
 
   return (
     <div>
       <DatasetSnapshot snapshot={snapshot} />
+      <HealthScoreCard healthScore={healthScore} />
       <NumericSummaryCard meta={meta} />
       <ColumnRoleList meta={meta} />
+      <PriorityInsightsCard insights={insights} recommendations={recommendations} />
     </div>
   );
 }

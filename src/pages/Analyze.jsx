@@ -8,7 +8,8 @@ import TargetStep       from "../components/analyze/TargetStep/TargetStep.jsx";
 import ProcessingStep   from "../components/analyze/ProcessingStep/ProcessingStep.jsx";
 import ResultsDashboard from "../components/analyze/ResultsDashboard/ResultsDashboard.jsx";
 
-import { analyzeDataset, detectTarget, generateSampleData } from "../components/utils/csvAnalyzer.js";
+import { analyzeDataset, detectTarget, detectColumnRoles, generateSampleData }
+  from "../components/utils/core/index.js";
 
 /* ─────────────────────────────────────────────
    STEP TRANSITION VARIANTS

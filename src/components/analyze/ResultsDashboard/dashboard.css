@@ -24,6 +24,7 @@
   background: rgba(255,255,255,0.02);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   padding: 32px 0;
+  padding-top: 92px;
   margin-bottom: 0;
 }
 
@@ -37,7 +38,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 74px;
   margin-bottom: 28px;
   flex-wrap: wrap;
   gap: 16px;
@@ -427,4 +427,360 @@
     margin-top: 20px;
     padding-top: 20px;
   }
+}
+
+/* ══════════════════════════════════════════
+   V3 — HEALTH SCORE CARD
+══════════════════════════════════════════ */
+.dash-health-card {
+  margin-bottom: 14px;
+}
+
+.dash-health-card__row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.dash-health-card__score-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 80px;
+}
+
+.dash-health-card__score {
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.dash-health-card__grade {
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.dash-health-card__sublabel {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.22);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-top: 3px;
+}
+
+.dash-health-card__breakdown {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.dash-health-dim__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.dash-health-dim__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+}
+
+.dash-health-dim__val {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dash-health-dim__track {
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.dash-health-dim__fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* ══════════════════════════════════════════
+   V3 — PRIORITY INSIGHTS
+══════════════════════════════════════════ */
+.dashboard-insights__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.dashboard-insights__counts {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dash-count-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dash-count-badge--critical {
+  background: rgba(239,68,68,0.10);
+  border: 1px solid rgba(239,68,68,0.22);
+  color: #f87171;
+}
+
+.dash-count-badge--warning {
+  background: rgba(245,158,11,0.10);
+  border: 1px solid rgba(245,158,11,0.22);
+  color: var(--warning);
+}
+
+.dash-insights-group {
+  margin-bottom: 14px;
+}
+
+.dash-insights-group:last-child {
+  margin-bottom: 0;
+}
+
+.dash-insights-group__label {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.20);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 7px;
+}
+
+.dash-insights-group__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dash-insight-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.dash-insight-row__icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.dash-insight-row__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-insight-row__title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.dash-insight-row__text {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.55;
+}
+
+.dash-insight-row__badge {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid;
+  border-radius: 100px;
+  padding: 2px 8px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ══════════════════════════════════════════
+   V3 — SMART RECOMMENDATIONS
+══════════════════════════════════════════ */
+.dash-recs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-rec-row {
+  padding: 11px 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+}
+
+.dash-rec-row__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.dash-rec-row__category {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.28);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.dash-rec-row__col {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(212,175,55,0.65);
+  font-family: monospace;
+}
+
+.dash-rec-row__priority {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  margin-left: auto;
+}
+
+.dash-rec-row__issue {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 4px;
+}
+
+.dash-rec-row__action {
+  font-size: 11px;
+  color: rgba(255,255,255,0.38);
+  line-height: 1.6;
+}
+
+.dash-recs-toggle {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.35);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 7px 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+  transition: border-color 0.2s ease, color 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.dash-recs-toggle:hover {
+  border-color: rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.60);
+}
+
+/* ══════════════════════════════════════════
+   V3 — RELATIONSHIPS TAB UPGRADES
+══════════════════════════════════════════ */
+.dash-rel-observation {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 12px;
+  color: rgba(255,255,255,0.42);
+  line-height: 1.55;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.dash-rel-observation:last-child {
+  border-bottom: none;
+}
+
+.dash-rel-observation__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(212,175,55,0.45);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.dash-rel-confidence {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dash-rel-confidence--reliable {
+  background: rgba(74,222,128,0.08);
+  border: 1px solid rgba(74,222,128,0.16);
+  color: var(--success);
+}
+
+.dash-rel-confidence--moderate {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.16);
+  color: var(--warning);
+}
+
+.dash-rel-confidence--unreliable {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.16);
+  color: #f87171;
+}
+
+.dash-leakage-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.20);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.dash-leakage-warning__icon {
+  font-size: 14px;
+  color: #f87171;
+  flex-shrink: 0;
+}
+
+.dash-leakage-warning__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f87171;
+  margin-bottom: 3px;
+}
+
+.dash-leakage-warning__text {
+  font-size: 11px;
+  color: rgba(255,255,255,0.42);
+  line-height: 1.55;
 }
