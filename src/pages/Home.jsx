@@ -7,7 +7,6 @@ import { ScrollProgress }   from "../components/layout/ScrollProgress.jsx";
 import HeroSection          from "../components/hero/HeroSection.jsx";
 import ProblemSolution      from "../components/home/ProblemSolution/ProblemSolution.jsx";
 import StorySection         from "../components/home/StorySection/StorySection.jsx";
-import SyntheticDataSection from "../components/home/SyntheticDataSection/SyntheticDataSection.jsx";
 import CtaFinal             from "../components/home/CtaFinal/CtaFinal.jsx";
 
 function Home() {
@@ -35,10 +34,6 @@ function Home() {
         <section id="story">
           <StorySection />
         </section>
-
-        {/* <section id="generator">
-          <SyntheticDataSection />
-        </section> */}
 
         <section id="cta">
           <CtaFinal />

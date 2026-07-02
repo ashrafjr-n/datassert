@@ -11,7 +11,7 @@ function Footer() {
       justifyContent: "space-between",
     }}>
       <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.22)" }}>
-          © 2026 Synthetic Data Lab. All rights reserved.
+          © 2026 Datassert. All rights reserved.
         </span>
 
         <motion.a

@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────
-   SDL CSV ANALYZER — Entry Point (V3)
+   Datassert CSV ANALYZER — Entry Point (V3)
    Pure JavaScript · No AI · No external APIs
 ───────────────────────────────────────────── */
 

@@ -79,7 +79,7 @@ const SCENES = [
   {
     num: "03",
     hl: "Individual features\nstart speaking.",
-    sub: "Distributions unfold. Outliers rise to the surface. SDL reveals what was previously invisible.",
+    sub: "Distributions unfold. Outliers rise to the surface. Datassert reveals what was previously invisible.",
   },
   {
     num: "04",
@@ -351,7 +351,7 @@ export default function StorySection() {
             <span className="st-anchor__dot" />
             <span className="st-anchor__dot" />
           </div>
-          <span className="st-anchor__text">SDL is processing</span>
+          <span className="st-anchor__text">Datassert is processing</span>
         </div>
         {/* Done state */}
         <div id="st-anchor-done" className="st-anchor__state st-anchor__state--done">

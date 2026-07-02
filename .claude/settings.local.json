@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(echo \"======== EXIT CODE: $? ========\")",
+      "Bash(echo \"======== grep exit: $? \\(1 = zero matches\\) ========\")"
+    ]
+  }
+}

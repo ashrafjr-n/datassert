@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────
-   SDL HELPERS — shared pure utilities
+   Datassert HELPERS — shared pure utilities
    No imports. Used by all other modules.
 ───────────────────────────────────────────── */
 

@@ -193,7 +193,7 @@ function ProblemSolution() {
         >
           <div className="ps-header__eyebrow">
             <span className="ps-header__eyebrow-line" />
-            What SDL surfaces
+            What Datassert surfaces
             <span className="ps-header__eyebrow-line" />
           </div>
           <h2 className="ps-header__headline">

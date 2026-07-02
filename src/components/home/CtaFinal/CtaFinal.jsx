@@ -72,7 +72,7 @@ function CtaFinal() {
 
           {/* Insight signals */}
           <div className="ctaf-visual__signals">
-            <div className="ctaf-visual__signals-label">SDL Analysis</div>
+            <div className="ctaf-visual__signals-label">Datassert Analysis</div>
             {INSIGHT_SIGNALS.map((s, i) => (
               <motion.div
                 key={i}
@@ -106,7 +106,7 @@ function CtaFinal() {
             animate={inView ? { opacity: 1 } : {}}
             transition={{ delay: 0.45, duration: 0.5 }}
           >
-            Upload any dataset. SDL tells you what it contains,
+            Upload any dataset. Datassert tells you what it contains,
             what it's missing, and what it's trying to show you.
           </motion.p>
 

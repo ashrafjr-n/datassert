@@ -56,7 +56,7 @@ function Header() {
               fontSize: "15px", fontWeight: "700",
               color: "var(--text-primary)", letterSpacing: "-0.01em", whiteSpace: "nowrap",
             }}>
-              Synthetic Data Lab
+              Datassert
             </span>
           </motion.div>
 
