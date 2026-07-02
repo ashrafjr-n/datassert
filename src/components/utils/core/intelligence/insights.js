@@ -189,8 +189,9 @@ export function getPriorityInsights({ meta, quality, statistics, relationships, 
 
   /* ── SUCCESS ── */
 
-  // Clean dataset
-  if (quality.missingCells === 0 && quality.duplicateRows === 0) {
+  // Clean dataset — FIX #4: require duplicates to have actually been checked;
+  // never claim "clean" when the duplicate scan was skipped (duplicateRows === null).
+  if (quality.missingCells === 0 && quality.duplicatesComputed && quality.duplicateRows === 0) {
     push("success",
       "Dataset is Clean",
       "No missing values or duplicate rows detected.",

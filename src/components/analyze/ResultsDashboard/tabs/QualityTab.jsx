@@ -227,9 +227,15 @@ function QualityTab({ result }) {
             cls:   quality.missingCells > 0 ? "dash-stat-value--warning" : "dash-stat-value--success",
           },
           {
+            // FIX #4: skipped ≠ zero. Show "Skipped" in a neutral (gray) style,
+            // never green success, when the duplicate scan was skipped.
             label: "Duplicate Rows",
-            value: quality.duplicateRows,
-            cls:   quality.duplicateRows > 0 ? "dash-stat-value--warning" : "dash-stat-value--success",
+            value: quality.duplicatesComputed ? quality.duplicateRows : "Skipped",
+            cls:   !quality.duplicatesComputed ? "dash-stat-value--neutral"
+                 : quality.duplicateRows > 0   ? "dash-stat-value--warning"
+                 :                               "dash-stat-value--success",
+            title: quality.duplicatesComputed ? undefined
+                 : "Duplicate check skipped on datasets over 50,000 rows.",
           },
           {
             label: "Missing %",
@@ -245,7 +251,7 @@ function QualityTab({ result }) {
             transition={{ delay: i * 0.07, duration: 0.32 }}
           >
             <div className="dash-stat-label">{k.label}</div>
-            <div className={`dash-stat-value ${k.cls}`}>{k.value}</div>
+            <div className={`dash-stat-value ${k.cls}`} title={k.title}>{k.value}</div>
           </motion.div>
         ))}
       </div>

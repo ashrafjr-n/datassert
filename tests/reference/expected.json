@@ -97,6 +97,35 @@
       }
     }
   },
+  "roles_missing": {
+    "_note": "missing_count, true_distinct, numeric_count are COMPUTED by pandas/scipy (objective reference). expected_role is INTENDED by fixture design (what detectColumnRoles SHOULD output) \u2014 it is asserted, not computed.",
+    "columns": {
+      "bin_col": {
+        "expected_role": "binary",
+        "missing_count": 4,
+        "numeric_count": null,
+        "true_distinct": 2
+      },
+      "cat_col": {
+        "expected_role": "categorical",
+        "missing_count": 3,
+        "numeric_count": null,
+        "true_distinct": 4
+      },
+      "id_col": {
+        "expected_role": "identifier",
+        "missing_count": 0,
+        "numeric_count": null,
+        "true_distinct": 24
+      },
+      "num_col": {
+        "expected_role": "numeric",
+        "missing_count": 3,
+        "numeric_count": 21,
+        "true_distinct": 13
+      }
+    }
+  },
   "skew_kurt": {
     "columns": {
       "right_skewed": {

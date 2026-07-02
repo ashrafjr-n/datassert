@@ -47,8 +47,11 @@ export function getQuality(data, columns, identifierCols = []) {
   });
 
   // FIX P6: skip duplicate detection for large datasets (expensive O(n × cols log cols))
-  let duplicateRows = 0;
-  if (data.length <= 50000) {
+  // FIX #4: "skipped" ≠ "zero". Represent not-computed as null + a duplicatesComputed
+  // flag, so 0 unambiguously means "checked, none found".
+  const duplicatesComputed = data.length <= 50000;
+  let duplicateRows = null;
+  if (duplicatesComputed) {
     const serialized = data.map(r => JSON.stringify(r, Object.keys(r).sort()));
     duplicateRows    = serialized.length - new Set(serialized).size;
   }
@@ -66,13 +69,17 @@ export function getQuality(data, columns, identifierCols = []) {
     });
   }
 
-  const dupPenalty = Math.round((duplicateRows / data.length) * 50);
-  if (dupPenalty > 0) {
-    penalties.push({
-      label:   "Duplicate rows",
-      detail:  `${duplicateRows} duplicate row${duplicateRows > 1 ? "s" : ""} found`,
-      penalty: dupPenalty,
-    });
+  // FIX #4: only penalize duplicates when they were actually computed — never let
+  // null coerce to a 0 (perfect) penalty. Skipped datasets get no duplicate term.
+  if (duplicatesComputed) {
+    const dupPenalty = Math.round((duplicateRows / data.length) * 50);
+    if (dupPenalty > 0) {
+      penalties.push({
+        label:   "Duplicate rows",
+        detail:  `${duplicateRows} duplicate row${duplicateRows > 1 ? "s" : ""} found`,
+        penalty: dupPenalty,
+      });
+    }
   }
 
   const issuePenalty = columnsWithIssues.length * 3;
@@ -90,6 +97,7 @@ export function getQuality(data, columns, identifierCols = []) {
     missingCells,
     missingPct:     Math.round(missingPct * 10) / 10,
     duplicateRows,
+    duplicatesComputed,
     columnsWithIssues,
     qualityScore:   score,
     scorePenalties: penalties,

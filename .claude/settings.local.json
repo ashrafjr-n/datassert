@@ -9,7 +9,8 @@
       "Bash(python3 -c \"import pandas, scipy; print\\(pandas.__version__, scipy.__version__\\)\")",
       "Bash(python3 *)",
       "Bash(node tests/phase0.test.mjs)",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "Bash(node *)"
     ]
   }
 }

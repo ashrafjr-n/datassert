@@ -1,0 +1,25 @@
+bin_col,cat_col,num_col,id_col
+Yes,red,10.0,ID-1000
+No,green,12.4,ID-1001
+Yes,blue,NA,ID-1002
+NA,yellow,16.6,ID-1003
+Yes,red,18.4,ID-1004
+No,N/A,20.0,ID-1005
+Yes,blue,21.4,ID-1006
+No,yellow,22.6,ID-1007
+Yes,red,23.6,ID-1008
+No,green,null,ID-1009
+?,blue,25.0,ID-1010
+No,yellow,25.4,ID-1011
+Yes,None,25.6,ID-1012
+No,green,25.6,ID-1013
+Yes,blue,25.4,ID-1014
+No,yellow,NaN,ID-1015
+Yes,red,24.4,ID-1016
+,green,23.6,ID-1017
+Yes,blue,22.6,ID-1018
+No,  ,21.4,ID-1019
+Yes,red,20.0,ID-1020
+  ,green,18.4,ID-1021
+Yes,blue,16.6,ID-1022
+No,yellow,14.6,ID-1023

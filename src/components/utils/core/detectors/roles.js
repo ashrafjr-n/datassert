@@ -1,4 +1,4 @@
-import { isIdentifierCol, isNumeric } from "../helpers.js";
+import { isIdentifierCol, isNumeric, isMissing } from "../helpers.js";
 
 export function detectColumnRoles(data, columns, target) {
   const roles = {};
@@ -9,9 +9,12 @@ export function detectColumnRoles(data, columns, target) {
       return;
     }
 
+    // FIX (Group B): key role detection on non-missing values only — exclude
+    // NA/?/null/None/NaN/whitespace so missing tokens don't inflate cardinality
+    // or dilute the numeric ratio. Scoped to role detection (not getValues).
     const sample = data.slice(0, 100)
       .map(r => r[col])
-      .filter(v => v !== "" && v != null);
+      .filter(v => !isMissing(v));
 
     if (sample.length === 0) {
       roles[col] = "categorical";

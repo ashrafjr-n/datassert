@@ -2,7 +2,7 @@ import {
   getNumericValues, getValues,
   mean, median, stdDev, quantile,
   skewness as computeSkewness, kurtosis as computeKurtosis,
-  buildHistogram,
+  buildHistogram, isMissing,
 } from "../helpers.js";
 
 export function getStatistics(data, numericCols) {
@@ -128,7 +128,8 @@ export function getVisualizations(data, columns, numericCols, categoricalCols) {
     const freq = {};
     data.forEach(r => {
       const v = r[col];
-      if (v !== "" && v != null) freq[String(v)] = (freq[String(v)] || 0) + 1;
+      // FIX (Group B): exclude missing tokens so NA/?/"" don't render as categories
+      if (!isMissing(v)) freq[String(v)] = (freq[String(v)] || 0) + 1;
     });
 
     const total       = Object.values(freq).reduce((a, b) => a + b, 0);

@@ -322,7 +322,8 @@ function ResultsDashboard({ result, onReset }) {
               { label: "Rows",          value: meta.rows.toLocaleString()            },
               { label: "Columns",       value: meta.columns                          },
               { label: "Missing",       value: quality.missingCells.toLocaleString() },
-              { label: "Duplicates",    value: quality.duplicateRows                 },
+              { label: "Duplicates",    value: quality.duplicatesComputed ? quality.duplicateRows : "Skipped",
+                                        title: quality.duplicatesComputed ? undefined : "Duplicate check skipped on datasets over 50,000 rows." },
               { label: "Health Score",  value: healthScore?.score ?? quality.qualityScore, suffix: "/100", quality: true },
             ].map((k, i) => (
               <motion.div
@@ -333,7 +334,7 @@ function ResultsDashboard({ result, onReset }) {
                 transition={{ delay: 0.12 + i * 0.06, duration: 0.35 }}
               >
                 <div className="dashboard-kpi-card__label">{k.label}</div>
-                <div className="dashboard-kpi-card__value">
+                <div className="dashboard-kpi-card__value" title={k.title}>
                   {k.value}
                   {k.suffix && <span className="dashboard-kpi-card__suffix">{k.suffix}</span>}
                 </div>

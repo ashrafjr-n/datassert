@@ -12,7 +12,7 @@ import { getHealthScore }          from "./scoring/health.js";
 import { getRecommendations }      from "./intelligence/recommendations.js";
 import { getPriorityInsights }     from "./intelligence/insights.js";
 import {
-  mean, getValues, getNumericValues, buildHistogram,
+  mean, getValues, getNumericValues, buildHistogram, isMissing,
 } from "./helpers.js";
 
 export { detectColumnRoles }       from "./detectors/roles.js";
@@ -92,11 +92,11 @@ function getClassBalance(data, target) {
 
   const allVals     = data.map(r => r[target]);
   const totalRows   = allVals.length;
-  const missingCount = allVals.filter(v => v === "" || v == null).length;
+  const missingCount = allVals.filter(v => isMissing(v)).length;
 
   const freq = {};
   allVals.forEach(v => {
-    if (v !== "" && v != null) freq[String(v)] = (freq[String(v)] || 0) + 1;
+    if (!isMissing(v)) freq[String(v)] = (freq[String(v)] || 0) + 1;
   });
 
   // FIX: pct over totalRows (not just non-missing), so numbers add up to ≤100%

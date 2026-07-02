@@ -30,9 +30,6 @@ export function getHealthScore({ meta, quality, statistics, relationships, class
 
   const adjustedMissingScore = Math.max(0, missingScore - worstColPenalty - highMissingCols * 5);
 
-  const dupPct         = (quality.duplicateRows / meta.rows) * 100;
-  const dupScore       = Math.max(0, 100 - dupPct * 50);
-
   const constantCount  = quality.columnsWithIssues.filter(c => c.issue === "constant").length;
   const constantScore  = Math.max(0, 100 - constantCount * 15);
 
@@ -40,7 +37,29 @@ export function getHealthScore({ meta, quality, statistics, relationships, class
   const idCount        = meta.identifierCols.length;
   const idScore        = Math.max(0, 100 - idCount * 3);
 
-  const qualityDim     = (adjustedMissingScore * 0.45 + dupScore * 0.25 + constantScore * 0.15 + idScore * 0.15);
+  // FIX #4: the duplicates term only participates when duplicates were actually
+  // computed. Branch on the flag BEFORE any division so null never enters the
+  // math (no NaN). When skipped, drop duplicates and renormalize the remaining
+  // weights {0.45, 0.15, 0.15} → {0.60, 0.20, 0.20} (sum 1.0).
+  let qualityComponents;
+  if (quality.duplicatesComputed) {
+    const dupPct   = (quality.duplicateRows / meta.rows) * 100;
+    const dupScore = Math.max(0, 100 - dupPct * 50);
+    qualityComponents = {
+      missing:    { score: adjustedMissingScore, weight: 0.45 },
+      duplicates: { score: dupScore,             weight: 0.25 },
+      constant:   { score: constantScore,        weight: 0.15 },
+      id:         { score: idScore,              weight: 0.15 },
+    };
+  } else {
+    qualityComponents = {
+      missing:  { score: adjustedMissingScore, weight: 0.60 },
+      constant: { score: constantScore,        weight: 0.20 },
+      id:       { score: idScore,              weight: 0.20 },
+    };
+  }
+  const qualityDim = Object.values(qualityComponents)
+    .reduce((sum, c) => sum + c.score * c.weight, 0);
 
   /* ── Dimension 2: Dataset Structure ── */
   const rowScore =
@@ -136,6 +155,12 @@ export function getHealthScore({ meta, quality, statistics, relationships, class
       structure:      Math.round(structureDim),
       relationships:  Math.round(relDim),
       targetReadiness: Math.round(targetDim),
+    },
+    // FIX #4: auditable quality sub-components + the exact weights applied
+    // (duplicates absent, weights renormalized, when the check was skipped).
+    qualityBreakdown: {
+      duplicatesComputed: quality.duplicatesComputed,
+      components:         qualityComponents,
     },
     hasTarget,
   };

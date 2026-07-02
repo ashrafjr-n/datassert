@@ -266,6 +266,11 @@
   color: var(--success);
 }
 
+/* FIX #4: neutral state — e.g. duplicate check skipped on large datasets */
+.dash-stat-value--neutral {
+  color: var(--text-secondary);
+}
+
 .dash-issue-row {
   display: flex;
   align-items: flex-start;

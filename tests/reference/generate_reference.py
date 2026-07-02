@@ -91,6 +91,53 @@ def missing_counts_for_file(path: str) -> dict:
     }
 
 
+# Declared design intent for roles_missing.csv — the role the JS engine SHOULD
+# assign to each column once missing tokens are stripped. This is a fixture-author
+# expectation (not something pandas computes), asserted by the later role test.
+ROLES_MISSING_EXPECTED_ROLE = {
+    "bin_col": "binary",
+    "cat_col": "categorical",
+    "num_col": "numeric",
+    "id_col": "identifier",
+}
+
+
+def _is_numeric_token(cell: str) -> bool:
+    """True iff a non-missing cell parses as a finite number."""
+    try:
+        float(cell)
+        return True
+    except ValueError:
+        return False
+
+
+def roles_missing_reference(path: str) -> dict:
+    """Per-column gold numbers for roles_missing.csv, read as raw strings so the
+    missing tokens are visible (keep_default_na=False, dtype=str).
+
+    missing_count / true_distinct / numeric_count are COMPUTED from the CSV.
+    numeric_count is only recorded for the numeric-role column (null elsewhere,
+    where a numeric parse count is not the relevant signal). expected_role is the
+    INTENDED design label, hardcoded in ROLES_MISSING_EXPECTED_ROLE."""
+    df = pd.read_csv(path, dtype=str, keep_default_na=False)
+    out = {}
+    for col in df.columns:
+        cells = df[col].tolist()
+        present = [c for c in cells if not is_missing(c)]  # non-missing raw values
+        role = ROLES_MISSING_EXPECTED_ROLE[col]
+        numeric_count = (
+            int(sum(_is_numeric_token(c) for c in present))
+            if role == "numeric" else None
+        )
+        out[col] = {
+            "missing_count": int(sum(is_missing(c) for c in cells)),
+            "true_distinct": len(set(present)),                 # distinct non-missing
+            "numeric_count": numeric_count,
+            "expected_role": role,                              # INTENDED (not computed)
+        }
+    return out
+
+
 def correlations_for_file(path: str) -> dict:
     df = pd.read_csv(path)
     num = df.select_dtypes(include=[np.number])
@@ -127,6 +174,17 @@ def main():
         "columns": numeric_stats_for_file(os.path.join(DATA, "skew_kurt.csv")),
     }
 
+    # e. roles_missing.csv — role-detection targets w/ missing tokens in typed cols
+    expected["roles_missing"] = {
+        "_note": (
+            "missing_count, true_distinct, numeric_count are COMPUTED by "
+            "pandas/scipy (objective reference). expected_role is INTENDED by "
+            "fixture design (what detectColumnRoles SHOULD output) — it is "
+            "asserted, not computed."
+        ),
+        "columns": roles_missing_reference(os.path.join(DATA, "roles_missing.csv")),
+    }
+
     with open(OUT, "w") as f:
         json.dump(expected, f, indent=2, sort_keys=True)
         f.write("\n")
@@ -159,6 +217,15 @@ def main():
     print_cols("mixed_types", expected["mixed_types"]["columns"])
     print()
     print_cols("skew_kurt", expected["skew_kurt"]["columns"])
+    print()
+
+    print("[roles_missing] role-detection targets (missing tokens in typed cols):")
+    for col, m in expected["roles_missing"]["columns"].items():
+        print(
+            f"  {col:<8} missing={m['missing_count']} "
+            f"true_distinct={m['true_distinct']} numeric_count={m['numeric_count']} "
+            f"expected_role={m['expected_role']}"
+        )
 
 
 if __name__ == "__main__":
