@@ -16,6 +16,14 @@ export function getNumericValues(data, col) {
   return getValues(data, col).map(v => parseFloat(v)).filter(v => !isNaN(v));
 }
 
+/* ── FIX #3: shared missing-value detection (matches reference harness) ── */
+export const MISSING_TOKENS = new Set(["", "na", "n/a", "nan", "null", "none", "?"]);
+export function isMissing(v) {
+  if (v == null) return true;                 // null or undefined
+  if (typeof v !== "string") return Number.isNaN(v);  // stray NaN number
+  return MISSING_TOKENS.has(v.trim().toLowerCase());  // trims whitespace-only too
+}
+
 export function mean(arr) {
   if (!arr.length) return 0;
   return arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -32,9 +40,34 @@ export function median(arr) {
 
 export function stdDev(arr) {
   if (arr.length < 2) return 0;
-  const m  = mean(arr);
-  const sq = arr.map(v => (v - m) ** 2);
-  return Math.sqrt(mean(sq));
+  const m   = mean(arr);
+  const sum = arr.reduce((acc, v) => acc + (v - m) ** 2, 0);
+  return Math.sqrt(sum / (arr.length - 1));   // ddof=1 (sample std)
+}
+
+/* ── FIX #2: moment-based, bias-corrected skewness (scipy.stats.skew bias=False) ── */
+export function skewness(arr) {
+  const n = arr.length;
+  if (n < 3) return 0;                         // bias-correction undefined for n<3
+  const m = mean(arr);
+  const m2 = arr.reduce((a, v) => a + (v - m) ** 2, 0) / n;  // central moments divide by n
+  const m3 = arr.reduce((a, v) => a + (v - m) ** 3, 0) / n;
+  if (m2 === 0) return 0;                       // zero variance → undefined, return 0
+  const g1 = m3 / m2 ** 1.5;                    // biased sample skewness
+  return (Math.sqrt(n * (n - 1)) / (n - 2)) * g1;  // bias-corrected G1 (scipy bias=False)
+}
+
+/* ── FIX #2: excess kurtosis, bias-corrected (scipy.stats.kurtosis bias=False, fisher=True) ── */
+export function kurtosis(arr) {
+  const n = arr.length;
+  if (n < 4) return 0;                          // bias-corrected excess kurtosis undefined for n<4
+  const m = mean(arr);
+  const m2 = arr.reduce((a, v) => a + (v - m) ** 2, 0) / n;
+  const m4 = arr.reduce((a, v) => a + (v - m) ** 4, 0) / n;
+  if (m2 === 0) return 0;
+  const g2 = m4 / (m2 * m2) - 3;                // biased excess kurtosis
+  // bias-corrected (scipy fisher=True, bias=False):
+  return ((n - 1) / ((n - 2) * (n - 3))) * ((n + 1) * g2 + 6);
 }
 
 export function quantile(arr, q) {

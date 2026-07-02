@@ -1,4 +1,4 @@
-import { isNumeric, getValues } from "../helpers.js";
+import { isNumeric, getValues, isMissing } from "../helpers.js";
 
 export function getQuality(data, columns, identifierCols = []) {
   let missingCells = 0;
@@ -6,8 +6,8 @@ export function getQuality(data, columns, identifierCols = []) {
 
   columns.forEach(col => {
     const vals    = data.map(r => r[col]);
-    const missing = vals.filter(v => v === "" || v == null).length;
-    const nonEmpty = vals.filter(v => v !== "" && v != null);
+    const missing = vals.filter(v => isMissing(v)).length;
+    const nonEmpty = vals.filter(v => !isMissing(v));
     const unique  = [...new Set(nonEmpty)];
 
     missingCells += missing;

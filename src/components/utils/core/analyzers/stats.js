@@ -1,6 +1,7 @@
 import {
   getNumericValues, getValues,
   mean, median, stdDev, quantile,
+  skewness as computeSkewness, kurtosis as computeKurtosis,
   buildHistogram,
 } from "../helpers.js";
 
@@ -17,10 +18,13 @@ export function getStatistics(data, numericCols) {
     const med    = median(vals);
     const std    = stdDev(vals);
 
-    const skewness = std === 0 ? 0 : Math.round(((m - med) / std) * 3 * 100) / 100;
+    // FIX #2: real bias-corrected moment skewness + excess kurtosis (scipy-matching)
+    const skewness = Math.round(computeSkewness(vals) * 100) / 100;
+    const kurtosis = Math.round(computeKurtosis(vals) * 100) / 100;
+    const absSkew  = Math.abs(skewness);
     const skewnessLabel =
-      skewness >  0.5 ? "right-skewed" :
-      skewness < -0.5 ? "left-skewed"  : "approximately symmetric";
+      absSkew < 0.5 ? "Symmetric" :
+      absSkew <= 1  ? "Moderate"  : "High";
 
     const lowerFence  = q1 - 1.5 * iqr;
     const upperFence  = q3 + 1.5 * iqr;
@@ -51,6 +55,7 @@ export function getStatistics(data, numericCols) {
       q3:           Math.round(q3 * 100) / 100,
       iqr:          Math.round(iqr * 100) / 100,
       skewness,
+      kurtosis,
       skewnessLabel,
       outlierCount: outliers.length,
       lowerFence:   Math.round(lowerFence * 100) / 100,
@@ -91,8 +96,8 @@ export function getVisualizations(data, columns, numericCols, categoricalCols) {
     const outliers    = isDiscrete2
       ? []
       : vals.filter(v => v < lowerFence || v > upperFence);
-    const m          = mean(vals);
-    const skewness   = (m - med) / (stdDev(vals) || 1) * 3;
+    // FIX #2: display-only skew hint now uses the real moment skewness helper
+    const skewness   = computeSkewness(vals);
 
     const skewLabel =
       min === max                ? "constant — all values are identical" :
