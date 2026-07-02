@@ -70,6 +70,37 @@ export function kurtosis(arr) {
   return ((n - 1) / ((n - 2) * (n - 3))) * ((n + 1) * g2 + 6);
 }
 
+/* ── FIX #5a: correlation ratio η — numeric-feature ↔ categorical association ──
+   η² = SS_between / SS_total, where
+     SS_between = Σ_g n_g (mean_g − mean_overall)²
+     SS_total   = Σ_i (x_i − mean_overall)²
+   η = sqrt(η²), range [0, 1]. Inputs must be paired & missing-free; caller
+   excludes missing (via isMissing) on both the value and the label. */
+export function etaCorrelation(numericValues, categoryLabels) {
+  const n = numericValues.length;
+  if (n < 3 || n !== categoryLabels.length) return 0;
+
+  const grand = mean(numericValues);
+  const ssTotal = numericValues.reduce((s, v) => s + (v - grand) ** 2, 0);
+  if (ssTotal === 0) return 0;                 // constant numeric column → nothing to explain
+
+  // group values by label
+  const groups = new Map();
+  for (let i = 0; i < n; i++) {
+    const g = categoryLabels[i];
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(numericValues[i]);
+  }
+  if (groups.size < 2) return 0;               // need ≥2 categories
+
+  let ssBetween = 0;
+  for (const vals of groups.values()) {
+    const gm = mean(vals);
+    ssBetween += vals.length * (gm - grand) ** 2;
+  }
+  return Math.sqrt(ssBetween / ssTotal);
+}
+
 export function quantile(arr, q) {
   const sorted = [...arr].sort((a, b) => a - b);
   const pos    = (sorted.length - 1) * q;

@@ -61,7 +61,7 @@ function RelationshipObservations({ observations }) {
    CORRELATION RANKING — with interpretations
 ───────────────────────────────────────────── */
 function CorrelationRanking({ relationships }) {
-  const { strongRelationships, multicollinearPairs } = relationships;
+  const { strongRelationships } = relationships;
 
   if (!strongRelationships.length) {
     return (

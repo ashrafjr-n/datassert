@@ -11,6 +11,7 @@ import { detectColumnRoles } from "../src/components/utils/core/detectors/roles.
 import { getVisualizations } from "../src/components/utils/core/analyzers/stats.js";
 import { isMissing } from "../src/components/utils/core/helpers.js";
 import { getHealthScore } from "../src/components/utils/core/scoring/health.js";
+import { etaCorrelation } from "../src/components/utils/core/helpers.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TOL = 1e-6;
@@ -246,6 +247,36 @@ for (const [ok, msg] of [
   [case2b, `skipped: 3 weights renormalized & sum to 1.0 (${sumWeights(c2)})`],
   [case2c, `skipped: duplicates dimension ABSENT from breakdown (keys: ${Object.keys(c2).join(",")})`],
 ]) { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${msg}`); }
+
+/* ── Fix #5a — correlation ratio η vs reference harness ── */
+const eta = parseCsv(
+  join(__dirname, "reference", "datasets", "eta_numeric_cat.csv"),
+);
+const etaRef = expected.eta_numeric_cat.eta;
+
+console.log("\nFix #5a — correlation ratio η (numeric feature vs categorical 'grp')\n");
+
+for (const col of ["val", "noise"]) {
+  // pair numeric value with grp label, excluding missing on both sides (same as engine)
+  const values = [], labels = [];
+  for (const r of eta.rows) {
+    const rawV = r[col], rawL = r.grp;
+    if (isMissing(rawV) || isMissing(rawL)) continue;
+    const v = parseFloat(rawV);
+    if (isNaN(v)) continue;
+    values.push(v);
+    labels.push(String(rawL).toLowerCase().trim());
+  }
+  const actual = etaCorrelation(values, labels);
+  const want = etaRef[col];
+  const diff = Math.abs(actual - want);
+  const pass = diff <= TOL;
+  if (!pass) failures++;
+  console.log(
+    `${pass ? "PASS" : "FAIL"}  ${col.padEnd(6)} η actual=${actual.toFixed(12)} ` +
+    `expected=${want.toFixed(12)}  |diff|=${diff.toExponential(3)}`,
+  );
+}
 
 console.log(`\n${failures === 0 ? "ALL PASS" : failures + " FAILURE(S)"}`);
 process.exit(failures === 0 ? 0 : 1);

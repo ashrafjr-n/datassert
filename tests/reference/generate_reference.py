@@ -148,6 +148,51 @@ def correlations_for_file(path: str) -> dict:
     return out
 
 
+def eta_correlation(values, labels):
+    """Correlation ratio η between a numeric array and its category labels.
+      η² = SS_between / SS_total
+      SS_between = Σ_g n_g (mean_g − mean_overall)²
+      SS_total   = Σ_i (x_i − mean_overall)²
+      η = sqrt(η²), range [0, 1].
+    values/labels are already paired & missing-free."""
+    values = np.asarray(values, dtype=float)
+    grand = values.mean()
+    ss_total = float(((values - grand) ** 2).sum())
+    if ss_total == 0:
+        return 0.0
+    ss_between = 0.0
+    for g in set(labels):
+        gv = values[[lab == g for lab in labels]]
+        if gv.size == 0:
+            continue
+        ss_between += gv.size * (gv.mean() - grand) ** 2
+    eta_sq = ss_between / ss_total
+    return float(np.sqrt(eta_sq))
+
+
+def eta_numeric_cat_reference(path: str):
+    """η of each numeric column vs the categorical 'grp', excluding missing on
+    BOTH sides. Labels normalized (lower+strip) to match the JS engine grouping.
+    Returns (etas dict, group_means dict) for eyeballing."""
+    df = pd.read_csv(path, dtype=str, keep_default_na=False)
+    etas, group_means = {}, {}
+    for col in ("val", "noise"):
+        pairs = []
+        for raw_lab, raw_val in zip(df["grp"], df[col]):
+            if is_missing(raw_lab) or is_missing(raw_val):
+                continue
+            pairs.append((raw_lab.strip().lower(), float(raw_val)))
+        labels = [p[0] for p in pairs]
+        values = [p[1] for p in pairs]
+        etas[col] = eta_correlation(values, labels)
+        gm = {}
+        for lab in sorted(set(labels)):
+            gv = [v for l, v in pairs if l == lab]
+            gm[lab] = {"n": len(gv), "mean": round(float(np.mean(gv)), 4)}
+        group_means[col] = gm
+    return etas, group_means
+
+
 def main():
     expected = {}
 
@@ -172,6 +217,17 @@ def main():
     # d. skew_kurt.csv — numeric stats (skew/kurtosis are the point of interest)
     expected["skew_kurt"] = {
         "columns": numeric_stats_for_file(os.path.join(DATA, "skew_kurt.csv")),
+    }
+
+    # f. eta_numeric_cat.csv — correlation ratio η, numeric feature vs categorical 'grp'
+    eta_vals, eta_group_means = eta_numeric_cat_reference(
+        os.path.join(DATA, "eta_numeric_cat.csv")
+    )
+    expected["eta_numeric_cat"] = {
+        "_note": "η (correlation ratio) of each numeric col vs categorical 'grp', "
+                 "missing excluded on both sides, labels lower+stripped. COMPUTED.",
+        "eta":         eta_vals,
+        "group_means": eta_group_means,
     }
 
     # e. roles_missing.csv — role-detection targets w/ missing tokens in typed cols
@@ -226,6 +282,14 @@ def main():
             f"true_distinct={m['true_distinct']} numeric_count={m['numeric_count']} "
             f"expected_role={m['expected_role']}"
         )
+    print()
+
+    print("[eta_numeric_cat] correlation ratio η vs categorical 'grp':")
+    for col in ("val", "noise"):
+        print(f"  {col:<6} η = {expected['eta_numeric_cat']['eta'][col]:.6f}")
+        gm = expected["eta_numeric_cat"]["group_means"][col]
+        means_str = ", ".join(f"{g}(n={d['n']})={d['mean']}" for g, d in gm.items())
+        print(f"         group means: {means_str}")
 
 
 if __name__ == "__main__":

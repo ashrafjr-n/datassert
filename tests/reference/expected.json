@@ -47,6 +47,51 @@
       "col_b__col_c": -0.008907314929405817
     }
   },
+  "eta_numeric_cat": {
+    "_note": "\u03b7 (correlation ratio) of each numeric col vs categorical 'grp', missing excluded on both sides, labels lower+stripped. COMPUTED.",
+    "eta": {
+      "noise": 0.0640089356637492,
+      "val": 0.9927693685538761
+    },
+    "group_means": {
+      "noise": {
+        "a": {
+          "mean": 51.822,
+          "n": 10
+        },
+        "b": {
+          "mean": 53.6463,
+          "n": 8
+        },
+        "c": {
+          "mean": 53.029,
+          "n": 10
+        },
+        "d": {
+          "mean": 51.4167,
+          "n": 9
+        }
+      },
+      "val": {
+        "a": {
+          "mean": 8.0278,
+          "n": 9
+        },
+        "b": {
+          "mean": 29.1356,
+          "n": 9
+        },
+        "c": {
+          "mean": 52.403,
+          "n": 10
+        },
+        "d": {
+          "mean": 80.1887,
+          "n": 8
+        }
+      }
+    }
+  },
   "missing_variants": {
     "missing_counts": {
       "alpha": 5,

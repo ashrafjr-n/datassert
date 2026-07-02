@@ -77,7 +77,7 @@ export function getPriorityInsights({ meta, quality, statistics, relationships, 
       .map(p => `"${p.col1}" ↔ "${p.col2}"`)
       .join(", ");
     push("warning",
-      "Multicollinearity Detected",
+      "Highly Correlated Features",
       `${relationships.multicollinearPairs.length} pair${relationships.multicollinearPairs.length > 1 ? "s" : ""} of nearly identical features: ${pairs}. Consider dropping one from each pair.`,
       75
     );
@@ -181,7 +181,11 @@ export function getPriorityInsights({ meta, quality, statistics, relationships, 
     if (topEntry && (topEntry[1]?.absValue ?? 0) >= 0.3) {
       push("info",
         "Feature-Target Association Found",
-        `Strongest predictor: "${topEntry[0]}" (${topEntry[1]?.metric === "cramers_v" ? "Cramér's V" : "r"} = ${(topEntry[1]?.absValue ?? 0).toFixed(2)}).`,
+        // FIX #5a: metric-aware label so η isn't mislabeled as Pearson "r"
+        `Strongest predictor: "${topEntry[0]}" (${
+          topEntry[1]?.metric === "cramers_v" ? "Cramér's V" :
+          topEntry[1]?.metric === "eta"       ? "Correlation ratio (η)" : "r"
+        } = ${(topEntry[1]?.absValue ?? 0).toFixed(2)}).`,
         42
       );
     }
@@ -212,8 +216,8 @@ export function getPriorityInsights({ meta, quality, statistics, relationships, 
   // No multicollinearity
   if (relationships.multicollinearPairs.length === 0 && relationships.cols.length >= 2) {
     push("success",
-      "No Multicollinearity",
-      "No near-perfect correlations between features — low multicollinearity.",
+      "No Highly Correlated Pairs",
+      "No near-perfect correlations between features — low redundancy.",
       35
     );
   }

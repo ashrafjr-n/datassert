@@ -176,7 +176,7 @@ export function getRecommendations({ meta, quality, statistics, relationships, c
       category:  "Feature Selection",
       priority:  "medium",
       column:    null,
-      issue:     `Multicollinearity: "${pair.col1}" ↔ "${pair.col2}" (r = ${pair.correlation.toFixed(2)})`,
+      issue:     `Strongly correlated: "${pair.col1}" ↔ "${pair.col2}" (r = ${pair.correlation.toFixed(2)})`,
       action:    `Consider dropping one of "${pair.col1}" or "${pair.col2}".${
         Object.keys(relationships.targetCorrelations).length > 0
           ? ` Keep the one with higher correlation to target.`

@@ -1,22 +1,33 @@
 import {
   getValues, getNumericValues,
-  mean, pearson, isNumeric,
+  mean, pearson, isNumeric, isMissing, etaCorrelation,
 } from "../helpers.js";
 
 export function getRelationshipsV3(data, numericCols, target) {
 
-  /* ── Select top-8 by variance (same as legacy) ── */
-  const cols = numericCols
-    .map(col => {
-      const vals = getNumericValues(data, col);
-      if (vals.length < 2) return { col, variance: 0 };
-      const m        = mean(vals);
-      const variance = mean(vals.map(v => (v - m) ** 2));
-      return { col, variance };
-    })
-    .sort((a, b) => b.variance - a.variance)
-    .slice(0, 8)
-    .map(c => c.col);
+  /* ── Column selection for the correlation scan (FIX #5b) ──
+     The pairwise scan is O(k²·n) in the number of numeric columns k. Below the
+     limit we include EVERY numeric column (40² ≈ 1600 pairs — trivial), so no
+     column is ever silently dropped. Only above the limit do we cap, and even
+     then we (a) rank by a SCALE-FREE criterion and (b) record what was excluded. */
+  const CORRELATION_COL_LIMIT = 40;
+
+  let cols;
+  let excludedColumns = [];
+  if (numericCols.length <= CORRELATION_COL_LIMIT) {
+    cols = [...numericCols];                       // all columns, no cap, no slice
+  } else {
+    // Rank by DISTINCT-COUNT of non-missing values — chosen over coefficient of
+    // variation because it is scale-free AND numerically robust: CoV (std/|mean|)
+    // blows up when a column is centered near zero, whereas distinct-count never
+    // divides. Near-constant columns correctly sink; ties keep original order
+    // (Array.sort is stable). Excluded columns are surfaced, never hidden.
+    const ranked = numericCols
+      .map(col => ({ col, distinct: new Set(getNumericValues(data, col)).size }))
+      .sort((a, b) => b.distinct - a.distinct);
+    cols            = ranked.slice(0, CORRELATION_COL_LIMIT).map(c => c.col);
+    excludedColumns = ranked.slice(CORRELATION_COL_LIMIT).map(c => c.col);
+  }
 
   /* ── Build full correlation matrix ── */
   const matrix             = {};
@@ -35,7 +46,8 @@ export function getRelationshipsV3(data, numericCols, target) {
       // No target data — return empty correlation structure
       return { cols: [], correlationMatrix: {}, strongRelationships: [],
                multicollinearPairs: [], clusterDetected: false, clusterCols: [],
-               leakageSuspects: [], targetCorrelations: {}, observations: [] };
+               leakageSuspects: [], targetCorrelations: {}, observations: [],
+               excludedColumns: [] };
     }
 
     const targetUnique  = [...new Set(targetVals.map(v => String(v).toLowerCase().trim()))];
@@ -130,6 +142,28 @@ export function getRelationshipsV3(data, numericCols, target) {
           value:    Math.round(cramersV * 100) / 100,
           absValue: Math.round(cramersV * 100) / 100,
         };
+
+      } else if (colIsNumeric && isCategoricalTarget) {
+        // FIX #5a: numeric feature vs categorical (>2-class) target — correlation
+        // ratio η. Previously this pairing fell through BOTH branches above and
+        // contributed no signal, flooring signalScore. η is on the same 0-1 scale
+        // as Pearson |r| / Cramér's V, so it drops straight into maxTargetR.
+        const values = [];
+        const labels = [];
+        data.forEach(row => {
+          const rawV = row[col];
+          const rawL = row[target];
+          if (isMissing(rawV) || isMissing(rawL)) return;   // exclude missing on both sides
+          const v = parseFloat(rawV);
+          if (isNaN(v)) return;
+          values.push(v);
+          labels.push(String(rawL).toLowerCase().trim());   // normalize like targetUnique
+        });
+
+        if (values.length >= 3) {
+          const eta = Math.round(etaCorrelation(values, labels) * 100) / 100;
+          targetCorrelations[col] = { metric: "eta", value: eta, absValue: Math.abs(eta) };
+        }
       }
     });
   }
@@ -190,7 +224,9 @@ export function getRelationshipsV3(data, numericCols, target) {
 
   strongRelationships.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
 
-  /* ── Multicollinearity detection (|r| > 0.9) ── */
+  /* ── Correlated-pair detection (|r| ≥ 0.9) ──
+     NOTE: multicollinearPairs is pairwise |r| ≥ 0.9, NOT VIF-based multicollinearity.
+     The field name is kept for consumer stability; user-facing labels say "strongly correlated". */
   const multicollinearPairs = strongRelationships
     .filter(r => Math.abs(r.correlation) >= 0.9)
     .map(r => ({
@@ -224,7 +260,11 @@ export function getRelationshipsV3(data, numericCols, target) {
   const leakageSuspects = Object.entries(targetCorrelations)
     .filter(([, entry]) => {
       const abs = entry?.absValue ?? 0;
-      // Only flag Pearson — Cramér's V near 1.0 is less reliable for leakage
+      // Only flag Pearson — Cramér's V near 1.0 is less reliable for leakage.
+      // FIX #5a: η is intentionally EXCLUDED here too. η≈1.0 can indicate leakage
+      // (a numeric feature perfectly separated by target classes), but it also
+      // occurs for genuinely strong categorical predictors → high false-positive
+      // risk. η-based leakage detection is a DEFERRED decision (not part of 5a).
       return entry?.metric === "pearson" && abs > 0.95;
     })
     .map(([col, entry]) => ({
@@ -237,7 +277,7 @@ export function getRelationshipsV3(data, numericCols, target) {
   const observations = [];
 
   if (multicollinearPairs.length > 0) {
-    observations.push(`${multicollinearPairs.length} pair${multicollinearPairs.length > 1 ? "s" : ""} show near-perfect correlation — multicollinearity risk.`);
+    observations.push(`${multicollinearPairs.length} pair${multicollinearPairs.length > 1 ? "s" : ""} of features are strongly correlated (|r| ≥ 0.9) — redundancy risk.`);
   }
 
   if (leakageSuspects.length > 0) {
@@ -259,6 +299,16 @@ export function getRelationshipsV3(data, numericCols, target) {
 
   if (clusterObservation) observations.push(clusterObservation);
 
+  // FIX #5b: never drop columns silently — name what was excluded when capped.
+  if (excludedColumns.length > 0) {
+    const shown = excludedColumns.slice(0, 8).join(", ");
+    const more  = excludedColumns.length > 8 ? `, +${excludedColumns.length - 8} more` : "";
+    observations.push(
+      `${numericCols.length} numeric columns exceeded the correlation limit (${CORRELATION_COL_LIMIT}); ` +
+      `showing the top ${CORRELATION_COL_LIMIT} by distinct-value count. Excluded: ${shown}${more}.`
+    );
+  }
+
   return {
     cols,
     correlationMatrix:    matrix,
@@ -269,5 +319,6 @@ export function getRelationshipsV3(data, numericCols, target) {
     leakageSuspects,
     targetCorrelations,
     observations,
+    excludedColumns,
   };
 }
