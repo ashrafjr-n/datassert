@@ -3,7 +3,11 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(echo \"======== EXIT CODE: $? ========\")",
-      "Bash(echo \"======== grep exit: $? \\(1 = zero matches\\) ========\")"
+      "Bash(echo \"======== grep exit: $? \\(1 = zero matches\\) ========\")",
+      "Bash(awk -F: '$1>673')",
+      "Bash(awk -F: '$1<671 || $1>876')",
+      "Bash(python3 -c \"import pandas, scipy; print\\(pandas.__version__, scipy.__version__\\)\")",
+      "Bash(python3 *)"
     ]
   }
 }

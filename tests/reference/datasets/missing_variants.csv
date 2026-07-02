@@ -1,0 +1,21 @@
+alpha,beta,gamma
+v0,-3.0,None
+,-1.5,dog
+v2,NaN,fish
+v3,1.5,bird
+  ,3.0,cat
+v5,4.5,?
+v6,6.0,fish
+v7,N/A,bird
+v8,9.0,cat
+?,10.5,dog
+v10,12.0,fish
+v11,13.5,  
+v12,15.0,cat
+v13,16.5,dog
+NA,18.0,fish
+v15,19.5,bird
+v16,None,cat
+v17,22.5,dog
+null,24.0,fish
+v19,25.5,

@@ -5,7 +5,6 @@ const SECTIONS = [
   { id: "hero",      label: "Discover" },
   { id: "why",       label: "Insights" },
   { id: "story",     label: "Workflow" },
-  { id: "generator", label: "Generate" },
   { id: "cta",       label: "Analyze" },
 ];
 
