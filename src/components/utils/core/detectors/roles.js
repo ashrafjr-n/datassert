@@ -1,11 +1,12 @@
 import { isIdentifierCol, isNumeric, isMissing } from "../helpers.js";
+import { ROLE } from "../roles.constants.js";
 
 export function detectColumnRoles(data, columns, target) {
   const roles = {};
   columns.forEach(col => {
     // Never short-circuit for target — we need its real role
     if (isIdentifierCol(data, col) && col !== target) {
-      roles[col] = "identifier";
+      roles[col] = ROLE.IDENTIFIER;
       return;
     }
 
@@ -17,7 +18,7 @@ export function detectColumnRoles(data, columns, target) {
       .filter(v => !isMissing(v));
 
     if (sample.length === 0) {
-      roles[col] = "categorical";
+      roles[col] = ROLE.CATEGORICAL;
       return;
     }
 
@@ -36,12 +37,12 @@ export function detectColumnRoles(data, columns, target) {
         && uniqueNum <= 8
         && uniqueNum / numSample.length < 0.05;
 
-      roles[col] = isEncoded ? "categorical" : "numeric";
+      roles[col] = isEncoded ? ROLE.CATEGORICAL : ROLE.NUMERIC;
       return;
     }
 
     const unique = new Set(sample.map(v => String(v).toLowerCase().trim())).size;
-    roles[col] = unique === 2 ? "binary" : "categorical";
+    roles[col] = unique === 2 ? ROLE.BINARY : ROLE.CATEGORICAL;
   });
   return roles;
 }

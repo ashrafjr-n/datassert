@@ -174,6 +174,60 @@ export function isIdentifierCol(data, col) {
     }
   }
 
+  /* ── Step 2a: numeric-but-categorical identifiers (phone, ZIP, account #, coded IDs)
+     These are typed "numeric" today and get nonsensical mean/std/outliers. Precision
+     over recall: NO purely-numeric signal flags ALONE (R1). Only the combinations in
+     R2 flag, except leading-zeros (R4) which is decisive alone. ─────────────────── */
+
+  // Clean raw-string sample (strings — PapaParse dynamicTyping is off, leading zeros survive)
+  const raw = vals.map(v => String(v).trim()).filter(v => !isMissing(v));
+  if (raw.length === 0) return false;
+
+  // — Signal: integer-form values (keeps leading zeros; rejects decimals like price/temp)
+  const intForm    = raw.filter(v => /^-?\d+$/.test(v));
+  const allInteger = intForm.length === raw.length;   // ANY decimal → not an integer ID
+
+  // — Signal R4: leading zeros (^0\d+$). Genuine numbers never carry leading zeros →
+  //   decisive on its own. Only reachable because the parse path keeps strings.
+  const hasLeadingZero = raw.some(v => /^0\d+$/.test(v));
+
+  // — Signal R3: extended name hint at a word boundary. Name ALONE never flags (must
+  //   co-occur with a shape signal) — guards "account_balance", "vintage", etc.
+  const idNameHint = /(\b|_)(id|uuid|key|index|ref|phone|tel|mobile|fax|zip|zipcode|postal|postcode|ssn|account|acct|ticket|isbn|ean|upc|imei|vin|serial|invoice|plate)(\b|_|$)/i
+    .test(nameLower);
+
+  // — Signal: near-perfect uniqueness. A bounded real feature (age, count) can't reach
+  //   ~1.0 once N exceeds its range; salaries repeat → stay < 0.99. Guards those.
+  const uniqRatio = new Set(raw).size / raw.length;
+
+  // — Signal: constant digit-width ≥ 5. width < 5 excludes year(4)/age(2)/temp; the
+  //   modal-width ≥ 90% share requirement excludes mixed-width salary (5–6 figures).
+  let constantWidth5 = false;
+  let medianWidth    = 0;
+  if (intForm.length > 0) {
+    const widths = intForm.map(v => v.replace("-", "").length);
+    const wFreq  = {};
+    widths.forEach(w => { wFreq[w] = (wFreq[w] || 0) + 1; });
+    const [modalW, modalCount] = Object.entries(wFreq).sort((a, b) => b[1] - a[1])[0];
+    constantWidth5 = Number(modalW) >= 5 && modalCount / widths.length >= 0.9;
+    const sortedW  = [...widths].sort((a, b) => a - b);
+    medianWidth    = sortedW[Math.floor(sortedW.length / 2)];
+  }
+
+  // R4 — leading zeros are decisive alone (verified: dynamicTyping off).
+  if (hasLeadingZero) return true;
+
+  // R2·1 — name hint + a corroborating shape signal (constant-width / near-unique).
+  if (idNameHint && (constantWidth5 || uniqRatio > 0.99)) return true;
+
+  // R2·2 — near-unique wide integers, but width+uniqueness ALONE is not enough (salary
+  //   guard): also require a name hint OR constant width.
+  if (uniqRatio > 0.99 && allInteger && medianWidth >= 6 && (idNameHint || constantWidth5)) return true;
+
+  // R2·3 — fixed-width ≥5 integers, only if corroborated by name or leading-zero.
+  //   Anonymous 5-digit integers (no name, no leading zero) stay NUMERIC.
+  if (constantWidth5 && (idNameHint || hasLeadingZero)) return true;
+
   return false;
 }
 

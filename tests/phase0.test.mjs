@@ -12,6 +12,7 @@ import { getVisualizations } from "../src/components/utils/core/analyzers/stats.
 import { isMissing } from "../src/components/utils/core/helpers.js";
 import { getHealthScore } from "../src/components/utils/core/scoring/health.js";
 import { etaCorrelation } from "../src/components/utils/core/helpers.js";
+import { ROLE } from "../src/components/utils/core/roles.constants.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TOL = 1e-6;
@@ -276,6 +277,38 @@ for (const col of ["val", "noise"]) {
     `${pass ? "PASS" : "FAIL"}  ${col.padEnd(6)} η actual=${actual.toFixed(12)} ` +
     `expected=${want.toFixed(12)}  |diff|=${diff.toExponential(3)}`,
   );
+}
+
+/* ── Step 2a — identifier-numeric detection (the false-positive battleground) ──
+   Role detection isn't a Python-computable metric, so intended roles live here as an
+   INTENDED map (like expected_role in roles_missing), not in expected.json. */
+const idn = parseCsv(
+  join(__dirname, "reference", "datasets", "identifier_numeric.csv"),
+);
+const INTENDED = {
+  // MUST be identifier (numeric-but-categorical codes)
+  phone:             ROLE.IDENTIFIER,   // 10-digit, non-sequential, name+uniqueness
+  zip_code:          ROLE.IDENTIFIER,   // 5-digit w/ repeats, name-hint + constant-width
+  account_id:        ROLE.IDENTIFIER,   // high-unique integer, name-hinted
+  leading_zero_code: ROLE.IDENTIFIER,   // 07030/00123 — R4 leading-zero, decisive alone
+  // MUST stay numeric (the FP guards)
+  age:               ROLE.NUMERIC,
+  price:             ROLE.NUMERIC,      // decimals → not integer-form
+  salary:            ROLE.NUMERIC,      // ← CRITICAL: width+uniqueness ALONE must not flag
+  year:              ROLE.NUMERIC,      // 4-digit width < 5 floor
+  temperature:       ROLE.NUMERIC,      // decimals
+  count_kids:        ROLE.NUMERIC,      // 0–8 low-cardinality count
+};
+const idnRoles = detectColumnRoles(idn.rows, idn.header, null);
+
+console.log("\nStep 2a — identifier-numeric detection (intended-role map)\n");
+for (const col of idn.header) {
+  const actual = idnRoles[col];
+  const want   = INTENDED[col];
+  const pass   = actual === want;
+  if (!pass) failures++;
+  const tag = want === ROLE.IDENTIFIER ? "[must=ID ]" : "[must=NUM]";
+  console.log(`${pass ? "PASS" : "FAIL"}  ${tag} ${col.padEnd(18)} actual=${String(actual).padEnd(12)} expected=${want}`);
 }
 
 console.log(`\n${failures === 0 ? "ALL PASS" : failures + " FAILURE(S)"}`);

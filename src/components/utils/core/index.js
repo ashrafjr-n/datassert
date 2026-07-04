@@ -14,18 +14,19 @@ import { getPriorityInsights }     from "./intelligence/insights.js";
 import {
   mean, getValues, getNumericValues, buildHistogram, isMissing,
 } from "./helpers.js";
+import { ROLE } from "./roles.constants.js";
 
 export { detectColumnRoles }       from "./detectors/roles.js";
 export { detectTarget }            from "./detectors/target.js";
 
 export function analyzeDataset(data, columns, target) {
   const columnRoles     = detectColumnRoles(data, columns, target);
-  const identifierCols  = columns.filter(c => columnRoles[c] === "identifier");
+  const identifierCols  = columns.filter(c => columnRoles[c] === ROLE.IDENTIFIER);
   // Exclude target from feature lists — it's tracked separately via meta.target
-  const numericCols     = columns.filter(c => columnRoles[c] === "numeric"
+  const numericCols     = columns.filter(c => columnRoles[c] === ROLE.NUMERIC
                             && c !== target);
   const categoricalCols = columns.filter(c =>
-                            (columnRoles[c] === "categorical" || columnRoles[c] === "binary")
+                            (columnRoles[c] === ROLE.CATEGORICAL || columnRoles[c] === ROLE.BINARY)
                             && c !== target);
 
   const meta           = getMeta(data, columns, target, numericCols, categoricalCols, identifierCols, columnRoles);
@@ -56,13 +57,13 @@ function getMeta(data, columns, target, numericCols, categoricalCols, identifier
     // FIX #2: Use column role as primary signal — more reliable than unique count
     const targetRole = columnRoles[target];
 
-    if (targetRole === "numeric") {
+    if (targetRole === ROLE.NUMERIC) {
       // Numeric role means values are continuous measurements → Regression
       datasetType = "Regression";
-    } else if (targetRole === "binary") {
+    } else if (targetRole === ROLE.BINARY) {
       // Exactly 2 values (0/1, yes/no) → Binary Classification
       datasetType = "Classification";
-    } else if (targetRole === "categorical") {
+    } else if (targetRole === ROLE.CATEGORICAL) {
       // Multiple text/category values → Multi-class Classification
       datasetType = "Classification";
     } else {
