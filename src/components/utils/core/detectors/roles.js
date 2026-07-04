@@ -1,4 +1,5 @@
 import { isIdentifierCol, isNumeric, isMissing } from "../helpers.js";
+import { isTemporalColumn } from "./temporal.js";
 import { ROLE } from "../roles.constants.js";
 
 export function detectColumnRoles(data, columns, target) {
@@ -19,6 +20,15 @@ export function detectColumnRoles(data, columns, target) {
 
     if (sample.length === 0) {
       roles[col] = ROLE.CATEGORICAL;
+      return;
+    }
+
+    // Cascade position 2: temporal — BEFORE numeric/categorical so date strings get
+    // ROLE.TEMPORAL instead of being swept into high-cardinality categorical (or a
+    // numeric-parseable date into numeric). Precision-gated: ≥90% valid dates of one
+    // family. Bare years/epoch have no date structure → fall through to numeric.
+    if (isTemporalColumn(sample)) {
+      roles[col] = ROLE.TEMPORAL;
       return;
     }
 

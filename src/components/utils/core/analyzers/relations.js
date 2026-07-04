@@ -3,7 +3,7 @@ import {
   mean, pearson, isNumeric, isMissing, etaCorrelation,
 } from "../helpers.js";
 
-export function getRelationshipsV3(data, numericCols, target) {
+export function getRelationshipsV3(data, numericCols, target, skipCols = new Set()) {
 
   /* ── Column selection for the correlation scan (FIX #5b) ──
      The pairwise scan is O(k²·n) in the number of numeric columns k. Below the
@@ -61,6 +61,10 @@ export function getRelationshipsV3(data, numericCols, target) {
     const allCols = Object.keys(data[0] || {});
     allCols.forEach(col => {
       if (col === target) return;
+      // Skip non-feature columns (identifiers ∪ temporals). This loop re-derives types
+      // from raw values ignoring roles, so without this an ID or date column leaks back
+      // in as a spurious Pearson/Cramér's-V predictor against the target.
+      if (skipCols.has(col)) return;
 
       const colVals = getValues(data, col);
       const colUnique = [...new Set(colVals.map(v => String(v).toLowerCase().trim()))];

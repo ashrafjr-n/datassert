@@ -311,5 +311,40 @@ for (const col of idn.header) {
   console.log(`${pass ? "PASS" : "FAIL"}  ${tag} ${col.padEnd(18)} actual=${String(actual).padEnd(12)} expected=${want}`);
 }
 
+/* ── Step 2b — temporal detection (FP battleground) ──
+   Intended roles as an INTENDED map (not expected.json — role detection isn't a
+   Python-reproducible metric). ≥90% valid dates of one family → TEMPORAL. */
+const tmp = parseCsv(
+  join(__dirname, "reference", "datasets", "temporal.csv"),
+);
+const INTENDED_TMP = {
+  // MUST be temporal
+  iso_date:     ROLE.TEMPORAL,    // 2024-01-15
+  iso_datetime: ROLE.TEMPORAL,    // 2024-01-15T10:30:00
+  us_slash:     ROLE.TEMPORAL,    // 01/15/2024, day>12 present → US mdy, no conflict
+  month_name:   ROLE.TEMPORAL,    // 15-Jan-2024
+  // MUST NOT be temporal (the FP guards)
+  year:         ROLE.NUMERIC,     // ← CRITICAL: bare 4-digit ints, no date structure
+  phone:        ROLE.IDENTIFIER,  // ← 2a must not regress
+  account_id:   ROLE.IDENTIFIER,  // ← 2a must not regress
+  price:        ROLE.NUMERIC,     // decimals
+  category:     ROLE.CATEGORICAL, // red/green/blue
+  mixed_junk:   ROLE.CATEGORICAL, // ← 90% rule: one stray date must not flip the column
+};
+const tmpRoles = detectColumnRoles(tmp.rows, tmp.header, null);
+
+console.log("\nStep 2b — temporal detection (intended-role map)\n");
+for (const col of tmp.header) {
+  const actual = tmpRoles[col];
+  const want   = INTENDED_TMP[col];
+  const pass   = actual === want;
+  if (!pass) failures++;
+  const tag =
+    want === ROLE.TEMPORAL   ? "[must=TIME]" :
+    want === ROLE.IDENTIFIER ? "[must=ID  ]" :
+    want === ROLE.NUMERIC    ? "[must=NUM ]" : "[must=CAT ]";
+  console.log(`${pass ? "PASS" : "FAIL"}  ${tag} ${col.padEnd(13)} actual=${String(actual).padEnd(12)} expected=${want}`);
+}
+
 console.log(`\n${failures === 0 ? "ALL PASS" : failures + " FAILURE(S)"}`);
 process.exit(failures === 0 ? 0 : 1);

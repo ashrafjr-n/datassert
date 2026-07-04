@@ -22,6 +22,7 @@ export { detectTarget }            from "./detectors/target.js";
 export function analyzeDataset(data, columns, target) {
   const columnRoles     = detectColumnRoles(data, columns, target);
   const identifierCols  = columns.filter(c => columnRoles[c] === ROLE.IDENTIFIER);
+  const temporalCols    = columns.filter(c => columnRoles[c] === ROLE.TEMPORAL);
   // Exclude target from feature lists — it's tracked separately via meta.target
   const numericCols     = columns.filter(c => columnRoles[c] === ROLE.NUMERIC
                             && c !== target);
@@ -29,11 +30,16 @@ export function analyzeDataset(data, columns, target) {
                             (columnRoles[c] === ROLE.CATEGORICAL || columnRoles[c] === ROLE.BINARY)
                             && c !== target);
 
-  const meta           = getMeta(data, columns, target, numericCols, categoricalCols, identifierCols, columnRoles);
-  const quality        = getQuality(data, columns, identifierCols);
+  // Non-feature columns skipped by the target-correlation scan (relations.js re-derives
+  // types from raw values, ignoring roles — so identifiers AND temporals must be named
+  // explicitly there or they leak back in as spurious predictors).
+  const skipFromCorrelation = new Set([...identifierCols, ...temporalCols]);
+
+  const meta           = getMeta(data, columns, target, numericCols, categoricalCols, identifierCols, temporalCols, columnRoles);
+  const quality        = getQuality(data, columns, identifierCols, temporalCols);
   const statistics     = getStatistics(data, numericCols);
   const visualizations = getVisualizations(data, columns, numericCols, categoricalCols);
-  const relationships  = getRelationshipsV3(data, numericCols, target);
+  const relationships  = getRelationshipsV3(data, numericCols, target, skipFromCorrelation);
   const classBalance   = getClassBalance(data, target);
   const snapshot       = getDatasetSnapshot(data, columns);
 
@@ -50,7 +56,7 @@ export function analyzeDataset(data, columns, target) {
 }
 
 
-function getMeta(data, columns, target, numericCols, categoricalCols, identifierCols, columnRoles) {
+function getMeta(data, columns, target, numericCols, categoricalCols, identifierCols, temporalCols, columnRoles) {
   let datasetType = "Unknown";
 
   if (target) {
@@ -66,6 +72,10 @@ function getMeta(data, columns, target, numericCols, categoricalCols, identifier
     } else if (targetRole === ROLE.CATEGORICAL) {
       // Multiple text/category values → Multi-class Classification
       datasetType = "Classification";
+    } else if (targetRole === ROLE.TEMPORAL) {
+      // Date/datetime target — forecasting problem. (Full temporal-target handling
+      // is a later step; here we just avoid mislabeling it Regression/Classification.)
+      datasetType = "Time Series";
     } else {
       // target role = "target" (assigned by detectColumnRoles as fallback)
       // Fall back to unique count heuristic
@@ -81,6 +91,7 @@ function getMeta(data, columns, target, numericCols, categoricalCols, identifier
     numericCols,
     categoricalCols,
     identifierCols,
+    temporalCols,
     columnRoles,
     target,
     datasetType,

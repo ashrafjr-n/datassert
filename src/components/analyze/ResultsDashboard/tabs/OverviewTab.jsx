@@ -118,6 +118,7 @@ const ROLE_PILL = {
   categorical: { label: "Aa", cls: "dash-pill--neutral" },
   binary:      { label: "01", cls: "dash-pill--success" },
   identifier:  { label: "ID", cls: "dash-pill--warning" },
+  temporal:    { label: "◷",  cls: "dash-pill--info"    },
   target:      { label: "▶",  cls: "dash-pill--gold"    },
 };
 
@@ -297,6 +298,7 @@ function NumericSummaryCard({ meta }) {
     { label: "Numeric Features",     value: meta.numericCols.length     },
     { label: "Categorical Features", value: meta.categoricalCols.length },
     { label: "Identifier Columns",   value: meta.identifierCols.length  },
+    { label: "Temporal Columns",     value: meta.temporalCols.length    },
     // Only show ML Task Type and Target Column when a target is set
     ...(meta.target ? [
       { label: "ML Task Type",   value: meta.datasetType, gold: true },
@@ -345,6 +347,7 @@ function ColumnRoleList({ meta }) {
     ...meta.numericCols.map(c     => ({ col: c, role: "numeric"     })),
     ...meta.categoricalCols.map(c => ({ col: c, role: "categorical" })),
     ...meta.identifierCols.map(c  => ({ col: c, role: "identifier"  })),
+    ...(meta.temporalCols ?? []).map(c => ({ col: c, role: "temporal" })),
   ];
 
   const groups = [
@@ -352,6 +355,7 @@ function ColumnRoleList({ meta }) {
     { role: "numeric",     label: "Numeric",      cols: allCols.filter(c => c.role === "numeric")     },
     { role: "categorical", label: "Categorical",  cols: allCols.filter(c => c.role === "categorical") },
     { role: "identifier",  label: "Identifier",   cols: allCols.filter(c => c.role === "identifier")  },
+    { role: "temporal",    label: "Temporal",     cols: allCols.filter(c => c.role === "temporal")    },
   ].filter(g => g.cols.length > 0);
 
   return (

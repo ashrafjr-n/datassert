@@ -7,6 +7,10 @@ import "./target.css";
    HELPERS
 ───────────────────────────────────────────── */
 function detectColType(data, col) {
+  // NOTE (Phase 1 / Step 2c): this is TargetStep's own lightweight guesser for the
+  // target-picker pill — independent of core roles. ROLE.TEMPORAL is intentionally NOT
+  // handled here yet, so a date target shows as "categorical". Deferred: wire in
+  // isTemporalColumn (detectors/temporal.js) if we want the picker to label dates.
   const sample = data.slice(0, 100).map(r => r[col]).filter(v => v !== "" && v != null);
   if (!sample.length) return "unknown";
   const unique  = [...new Set(sample.map(v => String(v).toLowerCase().trim()))];

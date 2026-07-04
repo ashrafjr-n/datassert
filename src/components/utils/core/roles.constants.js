@@ -10,6 +10,7 @@ export const ROLE = Object.freeze({
   NUMERIC:     "numeric",
   BINARY:      "binary",
   CATEGORICAL: "categorical",
+  TEMPORAL:    "temporal",
 });
 
 export const ALL_ROLES = Object.freeze(Object.values(ROLE));

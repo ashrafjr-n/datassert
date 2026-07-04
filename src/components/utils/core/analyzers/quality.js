@@ -1,6 +1,6 @@
 import { isNumeric, getValues, isMissing } from "../helpers.js";
 
-export function getQuality(data, columns, identifierCols = []) {
+export function getQuality(data, columns, identifierCols = [], temporalCols = []) {
   let missingCells = 0;
   const columnsWithIssues = [];
 
@@ -34,6 +34,7 @@ export function getQuality(data, columns, identifierCols = []) {
       // FIX: use ratio > 0.95 instead of === to catch near-unique columns
       } else if (
         !identifierCols.includes(col) &&
+        !temporalCols.includes(col) &&        // dates are all-unique but not "likely an ID"
         (unique.length / nonEmpty.length) > 0.95 &&
         nonEmpty.length > 10
       ) {
