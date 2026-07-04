@@ -5,6 +5,14 @@ export function getPriorityInsights({ meta, quality, statistics, relationships, 
     insights.push({ severity, title, text, priorityScore: score });
   };
 
+  // Trainability flavor for the smallest class — gated on ABSOLUTE count, not the
+  // imbalance %, so a moderate skew with plenty of minority samples raises no alarm.
+  // Shared by both imbalance insights (#3 severe, #7 moderate) to keep them in sync.
+  const minorityFlavor = count =>
+    count < 10 ? " — critically few, likely too few to learn a reliable pattern"
+    : count < 50 ? " — may be too few for reliable learning"
+    : "";
+
   /* ── CRITICAL ── */
 
   // Target leakage
@@ -35,12 +43,15 @@ export function getPriorityInsights({ meta, quality, statistics, relationships, 
 
   // Severe class imbalance
   if (classBalance?.isImbalanced) {
-    const majority = classBalance.classes.filter(c => !c.missing)[0];
-    const majPct   = majority?.pct ?? 0;
+    const nonMissing = classBalance.classes.filter(c => !c.missing);
+    const majority   = nonMissing[0];
+    const minority   = nonMissing[nonMissing.length - 1];   // smallest class = binding constraint
+    const majPct     = majority?.pct ?? 0;
     if (majPct > 90) {
       push("critical",
         "Severe Class Imbalance",
-        `Target class "${majority.value}" dominates at ${majPct}%. Model will likely predict only the majority class.`,
+        `Target class "${majority.value}" dominates at ${majPct}%. Model will likely predict only the majority class.` +
+        ` The smallest class "${minority.value}" has only ${minority.count} sample(s)${minorityFlavor(minority.count)}.`,
         95
       );
     }
@@ -85,12 +96,15 @@ export function getPriorityInsights({ meta, quality, statistics, relationships, 
 
   // Moderate class imbalance
   if (classBalance?.isImbalanced) {
-    const majority = classBalance.classes.filter(c => !c.missing)[0];
-    const majPct   = majority?.pct ?? 0;
+    const nonMissing = classBalance.classes.filter(c => !c.missing);
+    const majority   = nonMissing[0];
+    const minority   = nonMissing[nonMissing.length - 1];   // smallest class = binding constraint
+    const majPct     = majority?.pct ?? 0;
     if (majPct <= 90) {
       push("warning",
         "Class Imbalance",
-        `Target class "${majority.value}" represents ${majPct}% of data. Consider class-weighted training.`,
+        `Target class "${majority.value}" represents ${majPct}% of data. Consider class-weighted training.` +
+        ` The smallest class "${minority.value}" has ${minority.count} sample(s)${minorityFlavor(minority.count)}.`,
         72
       );
     }

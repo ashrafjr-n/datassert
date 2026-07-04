@@ -502,5 +502,36 @@ for (const [msg, ok] of kChecks) {
 }
 console.log(`  heavy body: ${kaIns?.text ?? "(none)"}`);
 
+/* ── Phase 2 Step 6 — minority-class count in imbalance insights ── */
+console.log("\nPhase 2 Step 6 — minority-class absolute count\n");
+
+// build an imbalanced target from [value, n] pairs
+const mkImb = (counts) => {
+  const rows = []; let i = 0;
+  for (const [val, n] of counts) for (let k = 0; k < n; k++) { rows.push({ y: val, f: String((i * 7) % 50) }); i++; }
+  return rows;
+};
+const imbBody = (counts) => {
+  const a = analyzeDataset(mkImb(counts), ["y", "f"], "y");
+  const ins = a.insights.find(i => i.title === "Severe Class Imbalance" || i.title === "Class Imbalance");
+  return ins?.text ?? "";
+};
+
+const bodyFew   = imbBody([["1", 95],  ["0", 6]]);            // 94% majority → severe; minority 6
+const bodyEnough= imbBody([["1", 500], ["0", 80]]);          // 86% majority → moderate; minority 80
+const bodyMulti = imbBody([["A", 200], ["B", 150], ["C", 8]]); // multiclass; smallest = C(8)
+
+const imbChecks = [
+  ["FEW: count 6 + 'critically few'",        /6 sample/.test(bodyFew) && /critically few/.test(bodyFew)],
+  ["ENOUGH: count 80, no alarm wording",     /80 sample/.test(bodyEnough) && !/critically few/.test(bodyEnough) && !/may be too few/.test(bodyEnough)],
+  ["MULTICLASS: smallest 'C' has 8, critical",/smallest class "C" has 8 sample/.test(bodyMulti) && /critically few/.test(bodyMulti)],
+];
+for (const [msg, ok] of imbChecks) {
+  if (!ok) failures++;
+  console.log(`${ok ? "PASS" : "FAIL"}  ${msg}`);
+}
+console.log(`  few body:    ${bodyFew}`);
+console.log(`  enough body: ${bodyEnough}`);
+
 console.log(`\n${failures === 0 ? "ALL PASS" : failures + " FAILURE(S)"}`);
 process.exit(failures === 0 ? 0 : 1);
