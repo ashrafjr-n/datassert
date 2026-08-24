@@ -72,6 +72,7 @@ src/
     Analyze.jsx               step machine: Upload → Target → Processing → Results
   components/
     analyze/                  uploader, target picker, tabbed results dashboard
+    common/                   shared primitives (ErrorBoundary)
     hero/ home/ layout/       marketing site
     utils/core/               the analysis engine (pure functions, no side effects)
       roles.constants.js      ROLE enum — the single source of truth for role strings
@@ -86,8 +87,11 @@ tests/                        analysis-engine regression suite + Python referenc
 
 ## Tech stack
 
-React 19 · Vite 8 · React Router 7 · Tailwind CSS 4 · Framer Motion · GSAP · Recharts ·
+React 19 · Vite 8 · React Router 7 · Tailwind CSS 4 · Framer Motion · GSAP ·
 PapaParse · lucide-react
+
+Routes are code-split with `React.lazy`, and the results dashboard loads as its own
+chunk only once an analysis finishes.
 
 ## Privacy
 
