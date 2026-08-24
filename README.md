@@ -83,3 +83,17 @@ src/
       helpers.js              shared numeric utilities
 tests/                        analysis-engine regression suite + Python reference
 ```
+
+## Tech stack
+
+React 19 · Vite 8 · React Router 7 · Tailwind CSS 4 · Framer Motion · GSAP · Recharts ·
+PapaParse · lucide-react
+
+## Privacy
+
+Datassert has no backend. CSV parsing and every statistic are computed client-side in
+JavaScript; nothing is transmitted, stored, or logged anywhere.
+
+## License
+
+Private project. All rights reserved.
