@@ -1,0 +1,1 @@
+var e=Object.freeze({IDENTIFIER:`identifier`,NUMERIC:`numeric`,BINARY:`binary`,CATEGORICAL:`categorical`,TEMPORAL:`temporal`});Object.freeze(Object.values(e));export{e as t};
