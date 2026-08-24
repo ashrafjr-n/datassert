@@ -45,3 +45,20 @@ required — the app is fully static.
 | `npm run build` | Production build into `dist/` |
 | `npm run preview` | Serve the built output locally |
 | `npm run lint` | Run ESLint over the project |
+
+## Tests
+
+The analysis engine has a dependency-free regression suite that runs on plain Node:
+
+```bash
+node tests/phase0.test.mjs
+```
+
+Statistical results are asserted against a Python reference (pandas/scipy) rather than
+hand-written expectations. `tests/reference/generate_reference.py` produces
+`tests/reference/expected.json` from the fixture CSVs in `tests/reference/datasets/`; the
+JavaScript implementation is then checked against it to a 1e-6 tolerance. Role detection,
+which has no Python equivalent, is asserted against intended-role maps declared in the test
+file itself.
+
+Run it after any change under `src/components/utils/core/`.
