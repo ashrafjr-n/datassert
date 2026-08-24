@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion }                        from "framer-motion";
 
 // ─── Framer-Motion variants ────────────────────────────────────────────────────
@@ -430,22 +430,23 @@ function ColButton({ label, isSelected, onClick, accent }) {
 function VisualizationsTab({ result }) {
   const { visualizations } = result;
 
-  // FIX: useState initialises once at mount. If visualizations arrives async
-  // (empty array on first render), selected stays "" and nothing is shown.
-  // useEffect syncs selected to the first column whenever the list changes.
-  const [selected, setSelected] = useState(visualizations[0]?.col ?? "");
+  // `selected` holds only the user's explicit pick. The column actually shown is
+  // DERIVED during render (no effect): it falls back to the first available column
+  // both on the first render, when visualizations arrives async, and when a new
+  // dataset drops the previously-picked column.
+  const [selected, setSelected] = useState("");
 
-  useEffect(() => {
-    if (!selected && visualizations.length) {
-      setSelected(visualizations[0].col);
-    }
+  const { numericVis, categoricalVis, vis, activeCol } = useMemo(() => {
+    const active = visualizations.some(v => v.col === selected)
+      ? selected
+      : (visualizations[0]?.col ?? "");
+    return {
+      numericVis:     visualizations.filter(v => v.type === "numeric"),
+      categoricalVis: visualizations.filter(v => v.type === "categorical"),
+      vis:            visualizations.find(v => v.col === active) ?? null,
+      activeCol:      active,
+    };
   }, [visualizations, selected]);
-
-  const { numericVis, categoricalVis, vis } = useMemo(() => ({
-    numericVis:     visualizations.filter(v => v.type === "numeric"),
-    categoricalVis: visualizations.filter(v => v.type === "categorical"),
-    vis:            visualizations.find(v => v.col === selected) ?? null,
-  }), [visualizations, selected]);
 
   if (!visualizations.length) {
     return (
@@ -469,7 +470,7 @@ function VisualizationsTab({ result }) {
             </div>
             <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
               {numericVis.map(v => (
-                <ColButton key={v.col} label={v.col} isSelected={selected === v.col}
+                <ColButton key={v.col} label={v.col} isSelected={activeCol === v.col}
                   onClick={() => setSelected(v.col)} accent="gold" />
               ))}
             </div>
@@ -486,7 +487,7 @@ function VisualizationsTab({ result }) {
             </div>
             <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
               {categoricalVis.map(v => (
-                <ColButton key={v.col} label={v.col} isSelected={selected === v.col}
+                <ColButton key={v.col} label={v.col} isSelected={activeCol === v.col}
                   onClick={() => setSelected(v.col)} accent="purple" />
               ))}
             </div>
@@ -497,7 +498,7 @@ function VisualizationsTab({ result }) {
       {/* ── Chart view ── */}
       {vis && (
         <motion.div
-          key={selected}
+          key={activeCol}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.28 }}
