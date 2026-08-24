@@ -79,6 +79,12 @@ button {
   font-family: inherit;
 }
 
+/* Tailwind's preflight deliberately strips the browser default pointer cursor
+   from <button> — every clickable button in the app needs it back explicitly. */
+button:not(:disabled), select {
+  cursor: pointer;
+}
+
 a {
   text-decoration: none;
   color: inherit;
