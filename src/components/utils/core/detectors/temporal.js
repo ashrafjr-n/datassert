@@ -27,7 +27,7 @@ const ISO_DATETIME =
 // Tier 2 — year-first numeric: 2024/01/15 or 2024.01.15 (dash reserved for ISO → unambiguous)
 const SLASH_YMD = /^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$/;
 // Tier 2 — day/month-first numeric: 01/15/2024, 15-01-2024, 15.01.2024 (AMBIGUOUS mdy vs dmy)
-const SLASH_DM = /^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2,4})$/;
+const SLASH_DM = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/;
 // Tier 3 — month-name token (alpha → cannot collide with numbers/IDs)
 const MONTH_ALT =
   "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?" +
