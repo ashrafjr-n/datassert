@@ -76,14 +76,22 @@ Run `npm test` after any change under `src/components/utils/core/`.
 
 ```text
 src/
-  App.jsx                     routes: / (landing), /analyze (the tool)
+  App.jsx                     routes: / (upload), /analyze (target → processing → results)
+  lib/
+    datasetHandoff.js         Home -> Analyze handoff (module singleton, not router state)
   pages/
-    Analyze.jsx               step machine: Upload → Target → Processing → Results
+    Home.jsx                  intro + the functional CSV dropzone
+    Analyze.jsx                3-step machine: Target → Processing → Results
   components/
-    analyze/                  uploader, target picker, tabbed results dashboard
+    layout/Header.jsx         fixed, full-width, shared by every page
     common/                   shared primitives (ErrorBoundary)
-    hero/ home/ layout/       marketing site
-    utils/core/               the analysis engine (pure functions, no side effects)
+    analyze/
+      shared/                 primitives used across steps/tabs (RolePill, StatTile,
+                               SectionCard, StatusBadge, correlationColor)
+      TargetStep/              target-column picker
+      ResultsDashboard/        tabbed report (Overview/Quality/Statistics/
+                                Visualizations/Relationships/Class Balance)
+    utils/core/                the analysis engine (pure functions, no side effects)
       roles.constants.js      ROLE enum — the single source of truth for role strings
       index.js                analyzeDataset() orchestrator
       detectors/              column-role classification, target guessing
@@ -96,8 +104,8 @@ tests/                        analysis-engine regression suite + output-shape co
 
 ## Tech stack
 
-React 19 · Vite 8 · React Router 7 · Tailwind CSS 4 · Framer Motion · GSAP ·
-PapaParse · lucide-react
+React 19 · Vite 8 · React Router 7 · Tailwind CSS 4 (CSS-first config, no
+`tailwind.config.js`) · Framer Motion · PapaParse · lucide-react
 
 Routes are code-split with `React.lazy`, and the results dashboard loads as its own
 chunk only once an analysis finishes.
