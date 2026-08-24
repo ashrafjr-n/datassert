@@ -1,6 +1,8 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+import ErrorBoundary from "./components/common/ErrorBoundary.jsx";
+
 /* Route-level code splitting: the landing page (GSAP-driven story section) and the
    analyzer (PapaParse + the whole results dashboard) never load together. */
 const Home    = lazy(() => import("./pages/Home"));
@@ -19,7 +21,16 @@ function App() {
           <Route path="/"        element={<Home />} />
           <Route path="/home"    element={<Navigate to="/" replace />} />
           <Route path="/search"  element={<Navigate to="/" replace />} />
-          <Route path="/analyze" element={<Analyze />} />
+          {/* Boundary sits INSIDE the route so a crash in the analyzer leaves the
+              router mounted — the user can still navigate away. */}
+          <Route
+            path="/analyze"
+            element={
+              <ErrorBoundary>
+                <Analyze />
+              </ErrorBoundary>
+            }
+          />
         </Routes>
       </Suspense>
     </BrowserRouter>
