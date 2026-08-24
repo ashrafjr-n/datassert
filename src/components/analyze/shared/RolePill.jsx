@@ -1,0 +1,25 @@
+import { ROLE } from "../../utils/core/roles.constants.js";
+
+/* Shared by TargetStep (the picker) and OverviewTab (the report) so a column's
+   role can never be colored differently in the two places — see frontend.md
+   "Target step" spec. identifier gets the warning tint (the one role the engine
+   recommends dropping); temporal gets the gold tint as a deliberate, sparing
+   accent — dates are the rarest/most notable role. */
+const PILL_STYLE = {
+  [ROLE.NUMERIC]:     "bg-info-tint text-info",
+  [ROLE.CATEGORICAL]: "bg-paper text-ink-soft border border-line",
+  [ROLE.BINARY]:      "bg-success-tint text-success",
+  [ROLE.IDENTIFIER]:  "bg-warning-tint text-warning",
+  [ROLE.TEMPORAL]:    "bg-gold-tint text-gold-ink",
+};
+const FALLBACK_PILL = PILL_STYLE[ROLE.CATEGORICAL];
+
+function RolePill({ role }) {
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] font-medium uppercase tracking-wide ${PILL_STYLE[role] ?? FALLBACK_PILL}`}>
+      {role}
+    </span>
+  );
+}
+
+export default RolePill;

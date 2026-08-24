@@ -4,34 +4,13 @@ import { ArrowRight, ArrowLeft, Info, ChevronDown } from "lucide-react";
 
 import { detectColumnRoles } from "../../utils/core/detectors/roles.js";
 import { ROLE }              from "../../utils/core/roles.constants.js";
+import RolePill               from "../shared/RolePill.jsx";
 
 const TARGET_MODES = [
   { id: "auto",   label: "Auto Detect"   },
   { id: "select", label: "Select Column" },
   { id: "none",   label: "No Target"     },
 ];
-
-/* Status-pill mapping, keyed by the ROLE enum — the picker labels columns with the
-   SAME roles the analysis engine assigns, so this can never disagree with the
-   report (see frontend.md "Target step"). identifier gets the warning tint since
-   it's the one role the engine recommends dropping; temporal gets the gold tint
-   as a deliberate, sparing accent — dates are the rarest/most notable role. */
-const PILL_STYLE = {
-  [ROLE.NUMERIC]:     "bg-info-tint text-info",
-  [ROLE.CATEGORICAL]: "bg-paper text-ink-soft border border-line",
-  [ROLE.BINARY]:      "bg-success-tint text-success",
-  [ROLE.IDENTIFIER]:  "bg-warning-tint text-warning",
-  [ROLE.TEMPORAL]:    "bg-gold-tint text-gold-ink",
-};
-const FALLBACK_PILL = PILL_STYLE[ROLE.CATEGORICAL];
-
-function RolePill({ role }) {
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] font-medium uppercase tracking-wide ${PILL_STYLE[role] ?? FALLBACK_PILL}`}>
-      {role}
-    </span>
-  );
-}
 
 function ModePanel({ mode, columns, colTypes, selected, setSelected, initialTarget }) {
   if (mode === "auto") {
