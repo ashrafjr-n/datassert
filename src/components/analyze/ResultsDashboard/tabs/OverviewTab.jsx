@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion }   from "framer-motion";
+import { ROLE }     from "../../../utils/core/roles.constants.js";
 
 const SEVERITY_CFG = {
   critical: { icon: "\u2715", bg: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  color: "#f87171",        label: "Critical" },
@@ -344,18 +345,18 @@ function NumericSummaryCard({ meta }) {
 function ColumnRoleList({ meta }) {
   const allCols = [
     ...(meta.target ? [{ col: meta.target, role: "target" }] : []),
-    ...meta.numericCols.map(c     => ({ col: c, role: "numeric"     })),
-    ...meta.categoricalCols.map(c => ({ col: c, role: "categorical" })),
-    ...meta.identifierCols.map(c  => ({ col: c, role: "identifier"  })),
-    ...(meta.temporalCols ?? []).map(c => ({ col: c, role: "temporal" })),
+    ...meta.numericCols.map(c     => ({ col: c, role: ROLE.NUMERIC     })),
+    ...meta.categoricalCols.map(c => ({ col: c, role: ROLE.CATEGORICAL })),
+    ...meta.identifierCols.map(c  => ({ col: c, role: ROLE.IDENTIFIER  })),
+    ...(meta.temporalCols ?? []).map(c => ({ col: c, role: ROLE.TEMPORAL })),
   ];
 
   const groups = [
-    { role: "target",      label: "Target",      cols: allCols.filter(c => c.role === "target")      },
-    { role: "numeric",     label: "Numeric",      cols: allCols.filter(c => c.role === "numeric")     },
-    { role: "categorical", label: "Categorical",  cols: allCols.filter(c => c.role === "categorical") },
-    { role: "identifier",  label: "Identifier",   cols: allCols.filter(c => c.role === "identifier")  },
-    { role: "temporal",    label: "Temporal",     cols: allCols.filter(c => c.role === "temporal")    },
+    { role: "target",         label: "Target",      cols: allCols.filter(c => c.role === "target")         },
+    { role: ROLE.NUMERIC,     label: "Numeric",      cols: allCols.filter(c => c.role === ROLE.NUMERIC)     },
+    { role: ROLE.CATEGORICAL, label: "Categorical",  cols: allCols.filter(c => c.role === ROLE.CATEGORICAL) },
+    { role: ROLE.IDENTIFIER,  label: "Identifier",   cols: allCols.filter(c => c.role === ROLE.IDENTIFIER)  },
+    { role: ROLE.TEMPORAL,    label: "Temporal",     cols: allCols.filter(c => c.role === ROLE.TEMPORAL)    },
   ].filter(g => g.cols.length > 0);
 
   return (
