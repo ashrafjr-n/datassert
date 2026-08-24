@@ -1,4 +1,4 @@
-export function getHealthScore({ meta, quality, statistics, relationships, classBalance }) {
+export function getHealthScore({ meta, quality, relationships, classBalance }) {
 
   const hasTarget = !!meta.target;
 

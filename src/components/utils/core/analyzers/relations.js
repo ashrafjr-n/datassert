@@ -109,7 +109,6 @@ export function getRelationshipsV3(data, numericCols, target, skipCols = new Set
       } else if (colIsCategorical) {
         // Cramér's V between categorical col and target
         // Range 0-1, higher = stronger association
-        const n = data.length;
         const freqTable = {};
         const rowMarg   = {};
         const colMarg   = {};

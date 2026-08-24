@@ -1,4 +1,4 @@
-export function getPriorityInsights({ meta, quality, statistics, relationships, classBalance, recommendations }) {
+export function getPriorityInsights({ meta, quality, statistics, relationships, classBalance }) {
   const insights = [];
 
   const push = (severity, title, text, score) => {
