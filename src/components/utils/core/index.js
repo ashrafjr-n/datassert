@@ -11,9 +11,7 @@ import { getRelationshipsV3 }      from "./analyzers/relations.js";
 import { getHealthScore }          from "./scoring/health.js";
 import { getRecommendations }      from "./intelligence/recommendations.js";
 import { getPriorityInsights }     from "./intelligence/insights.js";
-import {
-  mean, getValues, getNumericValues, buildHistogram, isMissing,
-} from "./helpers.js";
+import { getValues, isMissing } from "./helpers.js";
 import { ROLE } from "./roles.constants.js";
 
 export { detectColumnRoles }       from "./detectors/roles.js";

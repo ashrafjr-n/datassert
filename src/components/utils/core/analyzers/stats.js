@@ -1,5 +1,5 @@
 import {
-  getNumericValues, getValues,
+  getNumericValues,
   mean, median, stdDev, quantile,
   skewness as computeSkewness, kurtosis as computeKurtosis,
   buildHistogram, isMissing,
