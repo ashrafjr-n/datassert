@@ -32,44 +32,30 @@ class ErrorBoundary extends Component {
     if (!error) return this.props.children;
 
     return (
-      <div
-        role="alert"
-        style={{
-          minHeight:      "100vh",
-          display:        "flex",
-          flexDirection:  "column",
-          alignItems:     "center",
-          justifyContent: "center",
-          gap:            "16px",
-          padding:        "24px",
-          textAlign:      "center",
-          background:     "var(--surface-base)",
-          color:          "var(--text-primary)",
-        }}
-      >
-        <h1 style={{ fontSize: "20px", fontWeight: 700, margin: 0 }}>
-          Something went wrong
-        </h1>
-        <p style={{ fontSize: "14px", opacity: 0.6, margin: 0, maxWidth: "440px" }}>
+      <div role="alert" className="flex min-h-screen flex-col items-center justify-center gap-4 bg-paper px-6 text-center text-ink">
+        <h1 className="text-xl font-semibold">Something went wrong</h1>
+        <p className="max-w-md text-[14px] text-ink-soft">
           The analyzer hit an unexpected error. Your data never left the browser.
-          Try again, or reload the page with a different file.
+          Try again, or return to the start with a different file.
         </p>
-        <button
-          type="button"
-          onClick={this.handleReset}
-          style={{
-            padding:      "9px 18px",
-            fontSize:     "13px",
-            fontWeight:   600,
-            cursor:       "pointer",
-            borderRadius: "8px",
-            border:       "1px solid rgba(255,255,255,0.18)",
-            background:   "transparent",
-            color:        "inherit",
-          }}
-        >
-          Try again
-        </button>
+        <div className="mt-1 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={this.handleReset}
+            className="rounded-lg border border-line-strong px-4 py-2 text-[13px] font-semibold text-ink hover:bg-paper-sunken"
+          >
+            Try again
+          </button>
+          {/* Full navigation, not a router push: guarantees a clean module reload
+              (also clears the datasetHandoff singleton) even if the crash is
+              deterministic and "Try again" would hit it again immediately. */}
+          <a
+            href="/"
+            className="text-[13px] font-medium text-ink-soft hover:text-ink"
+          >
+            Return to start
+          </a>
+        </div>
       </div>
     );
   }
