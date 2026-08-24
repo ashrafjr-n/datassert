@@ -1,4 +1,4 @@
-import { isNumeric, getValues, isMissing } from "../helpers.js";
+import { isMissing } from "../helpers.js";
 
 export function getQuality(data, columns, identifierCols = [], temporalCols = []) {
   let missingCells = 0;

@@ -1,5 +1,3 @@
-import { getValues } from "../helpers.js";
-
 export function getHealthScore({ meta, quality, statistics, relationships, classBalance }) {
 
   const hasTarget = !!meta.target;
