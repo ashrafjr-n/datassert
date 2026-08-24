@@ -8,9 +8,9 @@ import ErrorBoundary from "./components/common/ErrorBoundary.jsx";
 const Home    = lazy(() => import("./pages/Home"));
 const Analyze = lazy(() => import("./pages/Analyze"));
 
-/* Painted in the app's own background so a chunk fetch never flashes white. */
+/* Painted in the app's own background so a chunk fetch never flashes an unstyled page. */
 function RouteFallback() {
-  return <div style={{ minHeight: "100vh", background: "var(--surface-base)" }} />;
+  return <div className="min-h-screen bg-paper" />;
 }
 
 function App() {
