@@ -231,23 +231,26 @@ function NumericView({ vis }) {
    CATEGORICAL COLUMN VIEW
 ───────────────────────────────────────────── */
 function CategoricalView({ vis }) {
-  if (!vis?.data?.length) return null;
-
   // Progressive Disclosure: default = simple (pct only, single scale).
   // "Details" mode reveals rank position via hover tooltip.
   // One scale per visual element — no cognitive overload.
+  // Rules of Hooks: every hook runs before the empty-data early return below.
   const [hoveredValue, setHoveredValue] = useState(null);
 
+  const data = vis?.data;
+
   const totalCount = useMemo(
-    () => vis.data.reduce((s, d) => s + d.count, 0) || 1,
-    [vis.data]
+    () => (data ?? []).reduce((s, d) => s + d.count, 0) || 1,
+    [data]
   );
 
   // Pre-compute sorted rank (1 = largest) — used only in hover tooltip
   const rankMap = useMemo(() => {
-    const sorted = [...vis.data].sort((a, b) => b.count - a.count);
+    const sorted = [...(data ?? [])].sort((a, b) => b.count - a.count);
     return Object.fromEntries(sorted.map((d, i) => [d.value, i + 1]));
-  }, [vis.data]);
+  }, [data]);
+
+  if (!data?.length) return null;
 
   const totalCategories = vis.data.length;
 
