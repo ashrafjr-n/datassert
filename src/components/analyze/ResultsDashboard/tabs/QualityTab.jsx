@@ -1,382 +1,171 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { CircleCheckBig, Layers, Minus } from "lucide-react";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+import SectionCard from "../../shared/SectionCard.jsx";
+import StatTile     from "../../shared/StatTile.jsx";
 
-const ISSUE_ICONS = {
-  missing:          "⚠",
-  high_cardinality: "◈",
-  constant:         "—",
-};
+const ISSUE_ICON = { high_cardinality: Layers, constant: Minus };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Maps a missing-value percentage to a severity colour.
- * Centralises all colour logic in one place so bars + labels always agree.
- */
-const getSeverityColor = (pct) => {
-  if (pct > 20) return "var(--danger, #f87171)";
-  if (pct > 10) return "var(--warning)";
-  return "rgba(255,255,255,0.40)";
-};
-
-/**
- * Robustly parse a count from c.detail which may arrive as:
- *   123 | "123" | "123 missing" | "12%" | null | "" | undefined
- * Strategy: strip everything except digits and dots, then parse.
- */
 const parseCount = (detail) => {
   const cleaned = String(detail ?? "0").replace(/[^\d.]/g, "");
   const n = Math.floor(Number(cleaned));
   return Number.isFinite(n) ? n : 0;
 };
 
-// ─── Framer-Motion variants ────────────────────────────────────────────────────
-
-const listVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.05, delayChildren: 0.42 } },
-};
-
-const rowVariants = {
-  hidden: { opacity: 0, x: -8 },
-  show:   { opacity: 1, x: 0, transition: { duration: 0.28 } },
-};
-
-
-// ─── LoadingSkeleton ──────────────────────────────────────────────────────────
-
-/**
- * Shown when meta.rows is not yet available (async load).
- * Prevents bars from rendering as ~100% on stale/empty data.
- */
-function LoadingSkeleton() {
-  return (
-    <motion.div
-      className="dash-card"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.25 }}
-      style={{ padding: "32px", textAlign: "center" }}
-    >
-      <div style={{
-        display:       "flex",
-        flexDirection: "column",
-        gap:           "12px",
-        alignItems:    "stretch",
-      }}>
-        {[100, 72, 55].map((w, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ width: "130px", height: "10px", borderRadius: "4px", background: "rgba(255,255,255,0.06)" }} />
-            <div style={{ flex: 1, height: "4px",  borderRadius: "2px", background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-              <motion.div
-                initial={{ width: "0%" }}
-                animate={{ width: `${w}%` }}
-                transition={{ delay: 0.1 * i, duration: 0.8, ease: "easeOut", repeat: Infinity, repeatType: "reverse", repeatDelay: 0.6 }}
-                style={{ height: "100%", background: "rgba(255,255,255,0.08)", borderRadius: "2px" }}
-              />
-            </div>
-            <div style={{ width: "42px", height: "10px", borderRadius: "4px", background: "rgba(255,255,255,0.06)" }} />
-          </div>
-        ))}
-      </div>
-      <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", marginTop: "18px" }}>
-        Loading row data…
-      </div>
-    </motion.div>
-  );
+function severityTone(pct) {
+  return pct > 20 ? "critical" : pct > 10 ? "warning" : "ink-faint";
 }
+const BAR_COLOR = { critical: "var(--color-critical)", warning: "var(--color-warning)", "ink-faint": "var(--color-ink-faint)" };
+const TEXT_TONE = { critical: "text-critical", warning: "text-warning", "ink-faint": "text-ink-faint" };
 
-// ─── MissingValuesRanking ─────────────────────────────────────────────────────
+// Tailwind's scanner is static/regex-based on raw source text — `text-${tone}`
+// never appears as a literal class string, so nothing gets generated. Every
+// class must resolve through a lookup of complete literal strings like this.
+const SCORE_TEXT = { success: "text-success", warning: "text-warning", critical: "text-critical" };
+const SCORE_BG   = { success: "bg-success",   warning: "bg-warning",   critical: "bg-critical"   };
 
-/**
- * Receives `missingCols` already enriched with `pct` from the parent's useMemo.
- * Purely presentational — no calculations here.
- */
-function MissingValuesRanking({ missingCols }) {
-  if (!missingCols.length) return null;
-
+function MissingRanking({ cols }) {
+  if (!cols.length) return null;
   return (
-    <motion.div
-      className="dash-card"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.38, duration: 0.35 }}
-      style={{ marginBottom: "14px" }}
-    >
-      <div className="dash-section-title">Missing Values — by Column</div>
-
-      <motion.div variants={listVariants} initial="hidden" animate="show">
-        {missingCols.map((item, i) => {
-          const { pct, count, col } = item;
-          const color = getSeverityColor(pct);
-
+    <SectionCard title="Missing values by column">
+      <div className="space-y-2.5">
+        {cols.map(({ col, count, pct }) => {
+          const tone = severityTone(pct);
           return (
-            <motion.div
-              key={col}
-              variants={rowVariants}
-              style={{
-                display:      "flex",
-                alignItems:   "center",
-                gap:          "12px",
-                padding:      "9px 0",
-                borderBottom: i < missingCols.length - 1
-                  ? "1px solid rgba(255,255,255,0.04)"
-                  : "none",
-              }}
-            >
-              {/* Column name */}
-              <span style={{
-                fontSize:     "12px",
-                fontWeight:   "500",
-                color:        "rgba(255,255,255,0.65)",
-                width:        "130px",
-                flexShrink:   0,
-                overflow:     "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace:   "nowrap",
-              }}>
-                {col}
-              </span>
-
-              {/* Bar — honest width; minWidth only shows a dot if pct > 0 */}
-              <div style={{
-                flex:         1,
-                height:       "4px",
-                background:   "rgba(255,255,255,0.06)",
-                borderRadius: "2px",
-                overflow:     "hidden",
-              }}>
+            <div key={col} className="flex items-center gap-3">
+              <span className="w-32 shrink-0 truncate font-mono text-[12px] text-ink-soft">{col}</span>
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-paper-sunken">
                 <motion.div
+                  className="h-full rounded-full"
+                  style={{ background: BAR_COLOR[tone] }}
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
-                  transition={{ delay: 0.46 + i * 0.05, duration: 0.5, ease: "easeOut" }}
-                  style={{
-                    height:       "100%",
-                    background:   color,
-                    borderRadius: "2px",
-                    minWidth:     pct > 0 ? "2px" : "0px",
-                  }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
                 />
               </div>
-
-              {/* Count + percentage */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.28)" }}>
-                  {count.toLocaleString()}
-                </span>
-                <span style={{
-                  fontSize:   "11px",
-                  fontWeight: "600",
-                  color,
-                  minWidth:   "42px",
-                  textAlign:  "right",
-                }}>
-                  {Math.round(pct * 10) / 10}%
-                </span>
-              </div>
-            </motion.div>
+              <span className="w-14 shrink-0 text-right font-mono text-[11px] text-ink-faint">{count.toLocaleString()}</span>
+              <span className={`w-12 shrink-0 text-right font-mono text-[12px] font-medium ${TEXT_TONE[tone]}`}>{Math.round(pct * 10) / 10}%</span>
+            </div>
           );
         })}
-      </motion.div>
-    </motion.div>
+      </div>
+    </SectionCard>
   );
 }
 
-// ─── QualityTab ───────────────────────────────────────────────────────────────
+function OtherIssues({ items }) {
+  if (!items.length) return null;
+  return (
+    <SectionCard title="Other issues">
+      <div className="divide-y divide-line">
+        {items.map((item) => {
+          const Icon = ISSUE_ICON[item.issue] ?? Minus;
+          return (
+            <div key={item.col} className="flex items-start gap-3 py-2.5 first:pt-0 last:pb-0">
+              <Icon size={14} className="mt-0.5 shrink-0 text-ink-faint" />
+              <div>
+                <div className="font-mono text-[12.5px] text-ink">{item.col}</div>
+                <div className="text-[12px] text-ink-soft">{item.detail}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </SectionCard>
+  );
+}
 
 function QualityTab({ result }) {
   const { quality, meta } = result;
-
-  // Row count isn't ready yet → render a skeleton instead of bars showing ~100%
-  // from a division-by-1 fallback on stale data.
   const totalRows = meta?.rows;
   const rowsReady = totalRows > 0;
-
-  // Rules of Hooks: these must run on EVERY render, so they sit above the early
-  // return below and no-op internally until the row count is ready.
   const issues = quality?.columnsWithIssues;
 
   const missingCols = useMemo(() => (
     !rowsReady ? [] : (issues ?? [])
-      .filter(c => c.issue === "missing")
-      .map(c => {
+      .filter((c) => c.issue === "missing")
+      .map((c) => {
         const count = parseCount(c.detail);
-        // clamp to [0, 100] — guards against data inconsistencies
-        const pct   = Math.min(100, Math.max(0, (count / totalRows) * 100));
+        const pct = Math.min(100, Math.max(0, (count / totalRows) * 100));
         return { col: c.col, count, pct };
       })
       .sort((a, b) => b.count - a.count)
   ), [issues, totalRows, rowsReady]);
 
-  const otherIssues = useMemo(() => (
-    (issues ?? []).filter(c => c.issue !== "missing")
-  ), [issues]);
+  const otherIssues = useMemo(() => (issues ?? []).filter((c) => c.issue !== "missing"), [issues]);
 
-  if (!rowsReady) return <LoadingSkeleton />;
+  if (!rowsReady) return null;
 
-  const score      = quality.qualityScore;
-  const scoreColor =
-    score >= 80 ? "var(--success)" :
-    score >= 55 ? "var(--warning)" :
-    "#f87171";
+  const score = quality.qualityScore;
+  const tone = score >= 80 ? "success" : score >= 55 ? "warning" : "critical";
 
   return (
-    <div>
-      {/* ── KPI row ── */}
-      <div className="dash-grid-3">
-        {[
-          {
-            label: "Missing Cells",
-            value: quality.missingCells.toLocaleString(),
-            cls:   quality.missingCells > 0 ? "dash-stat-value--warning" : "dash-stat-value--success",
-          },
-          {
-            // FIX #4: skipped ≠ zero. Show "Skipped" in a neutral (gray) style,
-            // never green success, when the duplicate scan was skipped.
-            label: "Duplicate Rows",
-            value: quality.duplicatesComputed ? quality.duplicateRows : "Skipped",
-            cls:   !quality.duplicatesComputed ? "dash-stat-value--neutral"
-                 : quality.duplicateRows > 0   ? "dash-stat-value--warning"
-                 :                               "dash-stat-value--success",
-            title: quality.duplicatesComputed ? undefined
-                 : "Duplicate check skipped on datasets over 50,000 rows.",
-          },
-          {
-            label: "Missing %",
-            value: `${quality.missingPct}%`,
-            cls:   quality.missingPct > 5 ? "dash-stat-value--warning" : "dash-stat-value--success",
-          },
-        ].map((k, i) => (
-          <motion.div
-            key={k.label}
-            className="dash-card"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.07, duration: 0.32 }}
-          >
-            <div className="dash-stat-label">{k.label}</div>
-            <div className={`dash-stat-value ${k.cls}`} title={k.title}>{k.value}</div>
-          </motion.div>
-        ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatTile label="Missing cells" value={quality.missingCells.toLocaleString()} tone={quality.missingCells > 0 ? "warning" : "success"} />
+        <StatTile
+          label="Duplicate rows"
+          value={quality.duplicatesComputed ? quality.duplicateRows.toLocaleString() : "Skipped"}
+          tone={!quality.duplicatesComputed ? "ink" : quality.duplicateRows > 0 ? "warning" : "success"}
+        />
+        <StatTile label="Missing %" value={`${quality.missingPct}%`} tone={quality.missingPct > 5 ? "warning" : "success"} />
       </div>
 
-      {/* ── Quality score + breakdown ── */}
-      <motion.div
-        className="dash-card dash-card--gold"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.22, duration: 0.35 }}
-        style={{ marginBottom: "14px" }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-          <div className="dash-section-title" style={{ marginBottom: 0 }}>Quality Score</div>
-          <span style={{ fontSize: "28px", fontWeight: "800", color: scoreColor, letterSpacing: "-0.04em" }}>
-            {score}
-            <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.22)", fontWeight: "400" }}>/100</span>
-          </span>
+      <SectionCard title="Quality score">
+        <div className="flex items-center justify-between">
+          <div className={`font-mono text-3xl font-semibold ${SCORE_TEXT[tone]}`}>
+            {score}<span className="text-sm font-normal text-ink-faint">/100</span>
+          </div>
         </div>
-
-        {/* Score bar */}
-        <div style={{ height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "2px", overflow: "hidden", marginBottom: "18px" }}>
+        <div className="my-4 h-1.5 overflow-hidden rounded-full bg-paper-sunken">
           <motion.div
+            className={`h-full rounded-full ${SCORE_BG[tone]}`}
             initial={{ width: 0 }}
             animate={{ width: `${score}%` }}
-            transition={{ delay: 0.3, duration: 0.7, ease: "easeOut" }}
-            style={{ height: "100%", background: scoreColor, borderRadius: "2px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           />
         </div>
 
-        {/* Score breakdown */}
         {quality.scorePenalties?.length > 0 ? (
-          <div>
-            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.28)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "10px" }}>
-              Why this score?
+          <div className="divide-y divide-line">
+            <div className="flex items-center justify-between py-2 text-[12px]">
+              <span className="text-ink-soft">Base score</span>
+              <span className="font-mono font-medium text-success">+100</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>Base score</span>
-              <span style={{ fontSize: "12px", fontWeight: "600", color: "var(--success)" }}>+100</span>
-            </div>
-
-            <motion.div variants={listVariants} initial="hidden" animate="show">
-              {quality.scorePenalties.map((p, i) => (
-                <motion.div
-                  key={p.label}
-                  variants={rowVariants}
-                  style={{
-                    display:        "flex",
-                    justifyContent: "space-between",
-                    alignItems:     "flex-start",
-                    padding:        "9px 0",
-                    borderBottom:   i < quality.scorePenalties.length - 1
-                      ? "1px solid rgba(255,255,255,0.05)"
-                      : "none",
-                    gap: "12px",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", fontWeight: "500", marginBottom: "2px" }}>{p.label}</div>
-                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.28)" }}>{p.detail}</div>
-                  </div>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: "var(--warning)", flexShrink: 0 }}>−{p.penalty}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0 0", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-              <span style={{ fontSize: "12px", fontWeight: "600", color: "rgba(255,255,255,0.55)" }}>Final score</span>
-              <span style={{ fontSize: "14px", fontWeight: "800", color: scoreColor }}>{score}/100</span>
+            {quality.scorePenalties.map((p) => (
+              <div key={p.label} className="flex items-center justify-between gap-3 py-2">
+                <div>
+                  <div className="text-[12.5px] text-ink">{p.label}</div>
+                  <div className="text-[11.5px] text-ink-faint">{p.detail}</div>
+                </div>
+                <span className="shrink-0 font-mono text-[12px] font-medium text-warning">−{p.penalty}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-2.5 text-[12.5px] font-medium">
+              <span className="text-ink-soft">Final score</span>
+              <span className={`font-mono ${SCORE_TEXT[tone]}`}>{score}/100</span>
             </div>
           </div>
         ) : (
-          <div style={{ fontSize: "12px", color: "var(--success)" }}>
-            ✓ No penalties — dataset passed all quality checks.
+          <div className="flex items-center gap-2 text-[12.5px] text-success">
+            <CircleCheckBig size={14} />
+            No penalties — dataset passed all quality checks.
           </div>
         )}
-      </motion.div>
+      </SectionCard>
 
-      {/* ── Missing values ranking ── */}
-      <MissingValuesRanking missingCols={missingCols} />
+      <MissingRanking cols={missingCols} />
+      <OtherIssues items={otherIssues} />
 
-      {/* ── Other issues ── */}
-      {otherIssues.length > 0 && (
-        <motion.div
-          className="dash-card"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.44, duration: 0.35 }}
-        >
-          <div className="dash-section-title">Other Issues</div>
-          {otherIssues.map((item, i) => (
-            <div
-              key={item.col}
-              className="dash-issue-row"
-              style={{ borderBottom: i < otherIssues.length - 1 ? undefined : "none" }}
-            >
-              <span className="dash-issue-row__icon">{ISSUE_ICONS[item.issue] ?? "⚠"}</span>
-              <div>
-                <div className="dash-issue-row__col">{item.col}</div>
-                <div className="dash-issue-row__detail">{item.detail}</div>
-              </div>
-            </div>
-          ))}
-        </motion.div>
-      )}
-
-      {/* ── All clean ── */}
       {quality.columnsWithIssues.length === 0 && (
-        <motion.div
-          className="dash-card"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.38 }}
-          style={{ textAlign: "center", padding: "32px" }}
-        >
-          <div style={{ fontSize: "22px", marginBottom: "10px" }}>✓</div>
-          <div style={{ fontSize: "14px", color: "var(--success)", fontWeight: "600" }}>No issues detected</div>
-          <div className="dash-stat-label" style={{ marginTop: "6px" }}>All columns passed quality checks.</div>
-        </motion.div>
+        <SectionCard>
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <CircleCheckBig size={22} className="text-success" />
+            <div className="text-[14px] font-medium text-success">No issues detected</div>
+            <div className="text-[12.5px] text-ink-faint">All columns passed quality checks.</div>
+          </div>
+        </SectionCard>
       )}
     </div>
   );

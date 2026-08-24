@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RotateCcw } from "lucide-react";
 
-import "./dashboard.css";
-import OverviewTab       from "./tabs/OverviewTab";
-import QualityTab        from "./tabs/QualityTab";
-import StatisticsTab     from "./tabs/StatisticsTab";
-import VisualizationsTab from "./tabs/VisualizationsTab";
-import RelationshipsTab  from "./tabs/RelationshipsTab";
-import ClassBalanceTab   from "./tabs/ClassBalanceTab";
+import StatTile from "../shared/StatTile.jsx";
+import OverviewTab       from "./tabs/OverviewTab.jsx";
+import QualityTab        from "./tabs/QualityTab.jsx";
+import StatisticsTab     from "./tabs/StatisticsTab.jsx";
+import VisualizationsTab from "./tabs/VisualizationsTab.jsx";
+import RelationshipsTab  from "./tabs/RelationshipsTab.jsx";
+import ClassBalanceTab   from "./tabs/ClassBalanceTab.jsx";
 
-/* ─────────────────────────────────────────────
-   CONSTANTS
-───────────────────────────────────────────── */
 const BASE_TABS = [
   { id: "overview",       label: "Overview"                            },
   { id: "quality",        label: "Quality"                             },
@@ -21,113 +19,108 @@ const BASE_TABS = [
   { id: "classbalance",   label: "Class Balance", requiresTarget: true },
 ];
 
-/* ─────────────────────────────────────────────
-   RESULTS DASHBOARD
-───────────────────────────────────────────── */
 function ResultsDashboard({ result, onReset }) {
   const [activeTab, setActiveTab] = useState("overview");
 
   if (!result) return null;
 
   const { meta, quality, healthScore } = result;
-  const tabs = BASE_TABS.filter(t => !t.requiresTarget || !!meta.target);
+  const tabs = BASE_TABS.filter((t) => !t.requiresTarget || !!meta.target);
+  const healthTone = healthScore
+    ? healthScore.score >= 80 ? "success" : healthScore.score >= 60 ? "warning" : "critical"
+    : "ink";
 
   return (
-    <div className="dashboard-page">
+    <div className="mx-auto max-w-[1400px] px-6 pb-16 pt-8 sm:px-12">
 
-      {/* ── Hero Bar ── */}
-      <div className="dashboard-hero">
-        <div className="dashboard-hero__inner">
+      {/* Scope row */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-5">
+        <div className="text-[13px] text-ink-soft">
+          {meta.target ? (
+            <>Target <span className="font-mono font-medium text-ink">{meta.target}</span> · {meta.datasetType}</>
+          ) : (
+            "No target selected · Exploratory analysis"
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onReset}
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-soft hover:text-ink"
+        >
+          <RotateCcw size={13} />
+          New analysis
+        </button>
+      </div>
 
-          {/* Top row */}
-          <div className="dashboard-hero__top">
-            <div className="dashboard-hero__title-wrap">
-              <div className="dashboard-hero__badge">✓</div>
-              <div>
-                <div className="dashboard-hero__title">Dataset Analysis Complete</div>
-                <div className="dashboard-hero__subtitle">
-                  {meta.target
-                    ? <>Target: <strong style={{ color: "var(--gold)" }}>{meta.target}</strong>&nbsp;·&nbsp;{meta.datasetType}</>
-                    : <span style={{ color: "rgba(255,255,255,0.30)" }}>No target selected · Exploratory analysis</span>
-                  }
-                </div>
-              </div>
-            </div>
+      {/* KPI strip */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.32 }}
+        className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+      >
+        <StatTile label="Rows" value={meta.rows.toLocaleString()} />
+        <StatTile label="Columns" value={meta.columns} />
+        <StatTile
+          label="Missing cells"
+          value={quality.missingCells.toLocaleString()}
+          tone={quality.missingCells > 0 ? "warning" : "success"}
+        />
+        <StatTile
+          label="Duplicate rows"
+          value={quality.duplicatesComputed ? quality.duplicateRows.toLocaleString() : "Skipped"}
+          tone={!quality.duplicatesComputed ? "ink" : quality.duplicateRows > 0 ? "warning" : "success"}
+        />
+        <StatTile label="Quality score" value={quality.qualityScore} suffix="/100" />
+        <StatTile
+          label="Health score"
+          value={healthScore?.score ?? quality.qualityScore}
+          suffix="/100"
+          tone={healthTone}
+        />
+      </motion.div>
 
-            <button className="dashboard-hero__reset" onClick={onReset}>
-              ↩ New Analysis
-            </button>
-          </div>
-
-          {/* KPI strip */}
-          <motion.div
-            className="dashboard-kpi-strip"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
+      {/* Tab bar */}
+      <div className="mt-6 flex gap-1 overflow-x-auto border-b border-line">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`relative whitespace-nowrap px-3.5 py-2.5 text-[13px] font-medium transition-colors ${
+              activeTab === tab.id ? "text-ink" : "text-ink-soft hover:text-ink"
+            }`}
           >
-            {[
-              { label: "Rows",          value: meta.rows.toLocaleString()            },
-              { label: "Columns",       value: meta.columns                          },
-              { label: "Missing",       value: quality.missingCells.toLocaleString() },
-              { label: "Duplicates",    value: quality.duplicatesComputed ? quality.duplicateRows : "Skipped",
-                                        title: quality.duplicatesComputed ? undefined : "Duplicate check skipped on datasets over 50,000 rows." },
-              { label: "Health Score",  value: healthScore?.score ?? quality.qualityScore, suffix: "/100", quality: true },
-            ].map((k, i) => (
+            {tab.label}
+            {activeTab === tab.id && (
               <motion.div
-                key={i}
-                className={`dashboard-kpi-card${k.quality ? " dashboard-kpi-card--quality" : ""}`}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.12 + i * 0.06, duration: 0.35 }}
-              >
-                <div className="dashboard-kpi-card__label">{k.label}</div>
-                <div className="dashboard-kpi-card__value" title={k.title}>
-                  {k.value}
-                  {k.suffix && <span className="dashboard-kpi-card__suffix">{k.suffix}</span>}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-
-        </div>
+                layoutId="resultsTabIndicator"
+                className="absolute inset-x-0 -bottom-px h-0.5 bg-gold"
+                transition={{ duration: 0.2 }}
+              />
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* ── Tab Bar ── */}
-      <div className="dashboard-tabs">
-        <div className="dashboard-tabs__inner">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`dashboard-tab${activeTab === tab.id ? " dashboard-tab--active" : ""}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Tab Content ── */}
-      <div className="dashboard-inner">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            className="dashboard-tab-content"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.28, ease: "easeOut" }}
-          >
-            {activeTab === "overview"       && <OverviewTab       result={result} />}
-            {activeTab === "quality"        && <QualityTab        result={result} />}
-            {activeTab === "statistics"     && <StatisticsTab     result={result} />}
-            {activeTab === "visualizations" && <VisualizationsTab result={result} />}
-            {activeTab === "relationships"  && <RelationshipsTab  result={result} />}
-            {activeTab === "classbalance"   && <ClassBalanceTab   result={result} />}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      {/* Tab content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.22, ease: "easeOut" }}
+          className="pt-6"
+        >
+          {activeTab === "overview"       && <OverviewTab       result={result} />}
+          {activeTab === "quality"        && <QualityTab        result={result} />}
+          {activeTab === "statistics"     && <StatisticsTab     result={result} />}
+          {activeTab === "visualizations" && <VisualizationsTab result={result} />}
+          {activeTab === "relationships"  && <RelationshipsTab  result={result} />}
+          {activeTab === "classbalance"   && <ClassBalanceTab   result={result} />}
+        </motion.div>
+      </AnimatePresence>
 
     </div>
   );
