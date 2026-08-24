@@ -1,89 +1,74 @@
 import { useState } from "react";
-import { motion }    from "framer-motion";
+import { motion } from "framer-motion";
+
+import SectionCard from "../../shared/SectionCard.jsx";
 
 function StatisticsTab({ result }) {
   const { statistics } = result;
   const [selected, setSelected] = useState(statistics[0]?.col || "");
-
-  const stat = statistics.find(s => s.col === selected);
+  const stat = statistics.find((s) => s.col === selected);
 
   if (!statistics.length) {
     return (
-      <div className="dash-card" style={{ textAlign: "center", padding: "40px" }}>
-        <div className="dash-stat-label">No numeric columns found.</div>
-      </div>
+      <SectionCard>
+        <div className="py-8 text-center text-[13px] text-ink-faint">No numeric columns found.</div>
+      </SectionCard>
     );
   }
 
-  const statRows = stat && !stat.empty ? [
-    { label: "Mean",           value: stat.mean.toLocaleString()   },
-    { label: "Median",         value: stat.median.toLocaleString() },
-    { label: "Minimum",        value: stat.min.toLocaleString()    },
-    { label: "Maximum",        value: stat.max.toLocaleString()    },
-    { label: "Std Deviation",  value: stat.std.toLocaleString()    },
-    { label: "Q1 (25%)",       value: stat.q1.toLocaleString()     },
-    { label: "Q3 (75%)",       value: stat.q3.toLocaleString()     },
-    { label: "Count",          value: stat.count.toLocaleString()  },
+  const rows = stat && !stat.empty ? [
+    { label: "Mean",          value: stat.mean },
+    { label: "Median",        value: stat.median },
+    { label: "Minimum",       value: stat.min },
+    { label: "Maximum",       value: stat.max },
+    { label: "Std deviation", value: stat.std },
+    { label: "Q1 (25%)",      value: stat.q1 },
+    { label: "Q3 (75%)",      value: stat.q3 },
+    { label: "IQR",           value: stat.iqr },
+    { label: "Skewness",      value: `${stat.skewness} (${stat.skewnessLabel})` },
+    { label: "Kurtosis",      value: stat.kurtosis },
+    { label: "Outliers",      value: stat.outlierCount },
+    { label: "Count",         value: stat.count },
   ] : [];
 
   return (
     <div>
-      {/* Column selector — pills */}
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "22px" }}>
-        {statistics.map(s => (
+      <div className="mb-5 flex flex-wrap gap-1.5">
+        {statistics.map((s) => (
           <button
             key={s.col}
+            type="button"
             onClick={() => setSelected(s.col)}
-            style={{
-              background:   selected === s.col ? "rgba(212,175,55,0.12)" : "rgba(255,255,255,0.04)",
-              border:       `1px solid ${selected === s.col ? "rgba(212,175,55,0.30)" : "rgba(255,255,255,0.08)"}`,
-              borderRadius: "8px",
-              padding:      "6px 14px",
-              fontSize:     "12px",
-              fontWeight:   selected === s.col ? "600" : "400",
-              color:        selected === s.col ? "var(--gold)" : "rgba(255,255,255,0.45)",
-              cursor:       "pointer",
-              transition:   "all 0.18s ease",
-              fontFamily:   "Inter, sans-serif",
-            }}
+            className={`rounded-md px-3 py-1.5 font-mono text-[12px] transition-colors ${
+              selected === s.col
+                ? "bg-gold-tint font-medium text-gold-ink"
+                : "bg-paper-sunken text-ink-soft hover:text-ink"
+            }`}
           >
             {s.col}
           </button>
         ))}
       </div>
 
-      {/* Stats */}
       {stat && !stat.empty ? (
-        <motion.div
-          key={selected}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.28 }}
-        >
-          <div className="dash-section-title">{selected}</div>
-          <div className="dash-card">
-            {statRows.map((row, i) => (
-              <div
-                key={i}
-                style={{
-                  display:        "flex",
-                  justifyContent: "space-between",
-                  alignItems:     "center",
-                  padding:        "10px 0",
-                  borderBottom:   i < statRows.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
-                }}
-              >
-                <span className="dash-stat-label" style={{ marginBottom: 0 }}>{row.label}</span>
-                <span className="dash-stat-value">{row.value}</span>
-              </div>
-            ))}
-          </div>
-
+        <motion.div key={selected} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
+          <SectionCard title={selected}>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2.5 sm:grid-cols-3">
+              {rows.map((row) => (
+                <div key={row.label} className="flex items-center justify-between border-b border-line pb-2">
+                  <span className="text-[12px] text-ink-soft">{row.label}</span>
+                  <span className="font-mono text-[12.5px] font-medium text-ink">
+                    {typeof row.value === "number" ? row.value.toLocaleString() : row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
         </motion.div>
       ) : (
-        <div className="dash-card" style={{ textAlign: "center", padding: "32px" }}>
-          <div className="dash-stat-label">No data available for this column.</div>
-        </div>
+        <SectionCard>
+          <div className="py-8 text-center text-[13px] text-ink-faint">No data available for this column.</div>
+        </SectionCard>
       )}
     </div>
   );

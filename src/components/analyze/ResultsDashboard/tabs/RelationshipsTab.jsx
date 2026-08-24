@@ -1,31 +1,21 @@
 import { useState } from "react";
-import { motion }   from "framer-motion";
+import { motion } from "framer-motion";
+import { CircleX } from "lucide-react";
 
-/* ─────────────────────────────────────────────
-   HELPERS
-───────────────────────────────────────────── */
-function heatColor(v) {
-  const abs = Math.abs(v);
-  if (abs >= 0.9)  return v > 0 ? "rgba(212,175,55,0.90)" : "rgba(99,179,237,0.90)";
-  if (abs >= 0.65) return v > 0 ? "rgba(212,175,55,0.55)" : "rgba(99,179,237,0.55)";
-  if (abs >= 0.45) return v > 0 ? "rgba(212,175,55,0.28)" : "rgba(99,179,237,0.28)";
-  if (abs >= 0.25) return v > 0 ? "rgba(212,175,55,0.12)" : "rgba(99,179,237,0.12)";
-  return "rgba(255,255,255,0.04)";
-}
+import SectionCard from "../../shared/SectionCard.jsx";
+import StatusBadge  from "../../shared/StatusBadge.jsx";
+import { correlationFill, correlationText } from "../../shared/correlationColor.js";
 
-/* ─────────────────────────────────────────────
-   LEAKAGE WARNINGS
-───────────────────────────────────────────── */
 function LeakageWarnings({ suspects }) {
   if (!suspects?.length) return null;
   return (
-    <div style={{ marginBottom: "14px" }}>
+    <div className="space-y-2">
       {suspects.map((leak, i) => (
-        <div key={i} className="dash-leakage-warning">
-          <div className="dash-leakage-warning__icon">✕</div>
+        <div key={i} className="flex items-start gap-3 rounded-lg border border-critical/20 bg-critical-tint px-4 py-3">
+          <CircleX size={15} className="mt-0.5 shrink-0 text-critical" />
           <div>
-            <div className="dash-leakage-warning__title">Possible Target Leakage</div>
-            <div className="dash-leakage-warning__text">{leak.warning}</div>
+            <div className="text-[13px] font-semibold text-critical">Possible target leakage</div>
+            <div className="text-[12.5px] text-ink-soft">{leak.warning}</div>
           </div>
         </div>
       ))}
@@ -33,252 +23,172 @@ function LeakageWarnings({ suspects }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   DATASET-LEVEL OBSERVATIONS
-───────────────────────────────────────────── */
-function RelationshipObservations({ observations }) {
+function Observations({ observations }) {
   if (!observations?.length) return null;
   return (
-    <motion.div
-      className="dash-card"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.05, duration: 0.32 }}
-      style={{ marginBottom: "14px" }}
-    >
-      <div className="dash-section-title">Dataset Observations</div>
-      {observations.map((obs, i) => (
-        <div key={i} className="dash-rel-observation">
-          <div className="dash-rel-observation__dot" />
-          {obs}
-        </div>
-      ))}
-    </motion.div>
+    <SectionCard title="Dataset observations">
+      <ul className="space-y-1.5">
+        {observations.map((obs, i) => (
+          <li key={i} className="flex items-start gap-2 text-[12.5px] text-ink-soft">
+            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-ink-faint" />
+            {obs}
+          </li>
+        ))}
+      </ul>
+    </SectionCard>
   );
 }
 
-/* ─────────────────────────────────────────────
-   CORRELATION RANKING — with interpretations
-───────────────────────────────────────────── */
-function CorrelationRanking({ relationships }) {
-  const { strongRelationships } = relationships;
-
+/* Diverging by sign: gold = positive, info blue = negative, per
+   correlationColor.js — the same encoding as the heatmap below, so ranking and
+   grid never disagree. */
+function CorrelationRanking({ strongRelationships }) {
   if (!strongRelationships.length) {
     return (
-      <motion.div
-        className="dash-card"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        style={{ textAlign: "center", padding: "28px", marginBottom: "14px" }}
-      >
-        <div className="dash-stat-label">No strong correlations found (|r| &gt; 0.4).</div>
-      </motion.div>
+      <SectionCard>
+        <div className="py-6 text-center text-[13px] text-ink-faint">No strong correlations found (|r| &gt; 0.4).</div>
+      </SectionCard>
     );
   }
 
   return (
-    <motion.div
-      className="dash-card"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.08, duration: 0.35 }}
-      style={{ marginBottom: "14px" }}
-    >
-      <div className="dash-section-title">
-        Top Relationships — {strongRelationships.length} found
-      </div>
+    <SectionCard title={`Top relationships — ${strongRelationships.length} found`}>
+      <div className="divide-y divide-line">
+        {strongRelationships.map((rel, i) => {
+          const abs = Math.abs(rel.correlation);
+          const isMC = abs >= 0.9;
+          const fill = correlationFill(rel.correlation);
 
-      {strongRelationships.map((rel, i) => {
-        const abs      = Math.abs(rel.correlation);
-        const barPct   = Math.round(abs * 100);
-        const isStrong = rel.strength === "strong" || rel.strength === "very strong";
-        const isPos    = rel.correlation > 0;
-        const isMC     = abs >= 0.9;
-        const rColor   = isMC
-          ? "#f87171"
-          : isStrong ? (isPos ? "var(--gold)" : "#63b3ed") : "rgba(255,255,255,0.40)";
-        const barBg = isMC
-          ? "linear-gradient(90deg, #f87171, #ef4444)"
-          : isStrong
-            ? (isPos ? "linear-gradient(90deg, var(--gold), var(--gold-warm))" : "linear-gradient(90deg, #63b3ed, #4299e1)")
-            : "rgba(255,255,255,0.22)";
-
-        return (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 + i * 0.05, duration: 0.28 }}
-            style={{
-              padding:      "12px 0",
-              borderBottom: i < strongRelationships.length - 1
-                ? "1px solid rgba(255,255,255,0.04)"
-                : "none",
-            }}
-          >
-            {/* Row 1: pair + bar + r value */}
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.18)", width: "16px", flexShrink: 0, textAlign: "right" }}>
-                {i + 1}
-              </span>
-              <span style={{ fontSize: "12px", fontWeight: "500", color: "rgba(255,255,255,0.65)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {rel.col1}
-                <span style={{ color: "rgba(255,255,255,0.22)", margin: "0 5px" }}>↔</span>
-                {rel.col2}
-              </span>
-              <div style={{ width: "80px", height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden", flexShrink: 0 }}>
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${barPct}%` }}
-                  transition={{ delay: 0.14 + i * 0.05, duration: 0.5, ease: "easeOut" }}
-                  style={{ height: "100%", borderRadius: "2px", background: barBg }}
-                />
-              </div>
-              <span style={{ fontSize: "12px", fontWeight: "700", color: rColor, minWidth: "46px", textAlign: "right", flexShrink: 0 }}>
-                r = {rel.correlation.toFixed(2)}
-              </span>
-              <span className={`dash-pill ${isMC ? "dash-pill--warning" : isStrong ? (isPos ? "dash-pill--gold" : "dash-pill--neutral") : "dash-pill--neutral"}`} style={{ flexShrink: 0 }}>
-                {isMC ? "redundant" : rel.strength}
-              </span>
-            </div>
-
-            {/* Row 2: interpretation + confidence */}
-            {rel.statement && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px", paddingLeft: "28px" }}>
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", flex: 1, fontStyle: "italic" }}>
-                  {rel.statement}
+          return (
+            <div key={i} className="py-3 first:pt-0 last:pb-0">
+              <div className="flex items-center gap-3">
+                <span className="w-4 shrink-0 text-right font-mono text-[10px] text-ink-faint">{i + 1}</span>
+                <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink-soft">
+                  {rel.col1} <span className="text-ink-faint">&harr;</span> {rel.col2}
                 </span>
-                {rel.confidence && (
-                  <span className={`dash-rel-confidence dash-rel-confidence--${rel.confidence}`}>
-                    {rel.confidence}
-                  </span>
-                )}
+                <div className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-paper-sunken">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.round(abs * 100)}%` }}
+                    transition={{ delay: i * 0.03, duration: 0.4, ease: "easeOut" }}
+                    className="h-full rounded-full"
+                    style={{ background: fill }}
+                  />
+                </div>
+                <span className="w-14 shrink-0 text-right font-mono text-[12px] font-semibold text-ink">
+                  r = {rel.correlation.toFixed(2)}
+                </span>
+                {isMC
+                  ? <StatusBadge severity="critical">redundant</StatusBadge>
+                  : <span className="shrink-0 rounded-full bg-paper-sunken px-2.5 py-0.5 text-[11px] text-ink-soft">{rel.strength}</span>}
               </div>
-            )}
-          </motion.div>
-        );
-      })}
-    </motion.div>
+              {rel.statement && (
+                <div className="mt-1.5 pl-7 text-[11.5px] italic text-ink-faint">{rel.statement}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </SectionCard>
   );
 }
 
-/* ─────────────────────────────────────────────
-   CORRELATION HEATMAP — adaptive cell size
-───────────────────────────────────────────── */
+const LEGEND = [
+  { fill: "#7A5C15", label: "Strong +" },
+  { fill: "#D9B450", label: "Moderate +" },
+  { fill: "#F6F6F4", label: "Weak" },
+  { fill: "#6FA8D8", label: "Moderate −" },
+  { fill: "#1B4C81", label: "Strong −" },
+];
+
 function CorrelationHeatmap({ relationships }) {
   const { cols, correlationMatrix } = relationships;
-  const [tooltip, setTooltip] = useState(null);
+  const [tip, setTip] = useState(null);
 
-  const cellSize = cols.length <= 4 ? 64 : cols.length <= 6 ? 54 : cols.length <= 8 ? 44 : 38;
-  const labelW   = cols.length <= 4 ? 100 : cols.length <= 6 ? 88 : cols.length <= 8 ? 76 : 64;
-  const fontSize = cols.length <= 6 ? "10px" : "9px";
+  const cellSize = cols.length <= 4 ? 60 : cols.length <= 6 ? 50 : cols.length <= 8 ? 42 : 34;
+  const labelW = cols.length <= 4 ? 96 : cols.length <= 6 ? 84 : cols.length <= 8 ? 72 : 60;
+  const showValue = cellSize >= 42;
 
   return (
-    <motion.div
-      className="dash-card"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.18, duration: 0.35 }}
-      style={{ overflowX: "auto" }}
-    >
-      <div className="dash-section-title">Correlation Heatmap</div>
-
-      <div style={{ display: "flex", paddingLeft: `${labelW}px`, marginBottom: "4px" }}>
-        {cols.map(col => (
-          <div key={col} style={{ width: `${cellSize}px`, flexShrink: 0, fontSize, color: "rgba(255,255,255,0.32)", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", padding: "0 2px" }}>
-            {col.length > 6 ? col.slice(0, 5) + "…" : col}
-          </div>
-        ))}
-      </div>
-
-      {cols.map((rowCol, i) => (
-        <div key={rowCol} style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
-          <div style={{ width: `${labelW}px`, flexShrink: 0, fontSize, color: "rgba(255,255,255,0.32)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: "8px", textAlign: "right" }}>
-            {rowCol}
-          </div>
-          {cols.map((colCol, j) => {
-            const key      = `${rowCol}||${colCol}`;
-            const val      = correlationMatrix[key] ?? correlationMatrix[`${colCol}||${rowCol}`] ?? 0;
-            const isActive = tooltip?.row === i && tooltip?.col === j;
-            const isDiag   = rowCol === colCol;
-            return (
-              <motion.div
-                key={colCol}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: (i * cols.length + j) * 0.008, duration: 0.22 }}
-                onMouseEnter={() => !isDiag && setTooltip({ row: i, col: j, val, rowCol, colCol })}
-                onMouseLeave={() => setTooltip(null)}
-                style={{
-                  width: `${cellSize}px`, height: `${Math.round(cellSize * 0.6)}px`,
-                  flexShrink: 0, borderRadius: "5px", background: heatColor(val),
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "8px", fontWeight: "600",
-                  color: isActive ? "rgba(255,255,255,0.95)" : "transparent",
-                  cursor: isDiag ? "default" : "crosshair", margin: "0 2px",
-                  transition: "transform 0.12s ease, box-shadow 0.12s ease",
-                  transform: isActive ? "scale(1.1)" : "scale(1)",
-                  boxShadow: isActive ? "0 0 0 1px rgba(255,255,255,0.18)" : "none",
-                  outline: isDiag ? "1px solid rgba(255,255,255,0.08)" : "none",
-                }}
-              >
-                {val.toFixed(2)}
-              </motion.div>
-            );
-          })}
+    <SectionCard title="Correlation heatmap">
+      <div className="overflow-x-auto">
+        <div className="flex" style={{ paddingLeft: labelW }}>
+          {cols.map((col) => (
+            <div key={col} className="shrink-0 truncate text-center font-mono text-[9px] text-ink-faint" style={{ width: cellSize }}>
+              {col.length > 6 ? `${col.slice(0, 5)}…` : col}
+            </div>
+          ))}
         </div>
-      ))}
 
-      {/* Legend + tooltip */}
-      <div style={{ display: "flex", alignItems: "center", gap: "14px", marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)", flexWrap: "wrap", minHeight: "38px" }}>
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.20)" }}>Legend:</span>
-        {[
-          { color: "rgba(212,175,55,0.90)", label: "Strong +"  },
-          { color: "rgba(212,175,55,0.28)", label: "Moderate +" },
-          { color: "rgba(99,179,237,0.55)", label: "Moderate −" },
-          { color: "rgba(99,179,237,0.90)", label: "Strong −"  },
-          { color: "rgba(255,255,255,0.04)", label: "Weak"     },
-        ].map((l, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            <div style={{ width: "11px", height: "11px", borderRadius: "3px", background: l.color, flexShrink: 0 }} />
-            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)" }}>{l.label}</span>
+        {cols.map((rowCol, i) => (
+          <div key={rowCol} className="mt-1 flex items-center">
+            <div className="shrink-0 truncate pr-2 text-right font-mono text-[9px] text-ink-faint" style={{ width: labelW }}>
+              {rowCol}
+            </div>
+            {cols.map((colCol, j) => {
+              const key = `${rowCol}||${colCol}`;
+              const val = correlationMatrix[key] ?? correlationMatrix[`${colCol}||${rowCol}`] ?? 0;
+              const isDiag = rowCol === colCol;
+              const isActive = tip?.row === i && tip?.col === j;
+              return (
+                <div
+                  key={colCol}
+                  onMouseEnter={() => !isDiag && setTip({ row: i, col: j, val, rowCol, colCol })}
+                  onMouseLeave={() => setTip(null)}
+                  className="mx-0.5 flex shrink-0 items-center justify-center rounded font-mono text-[9px] font-medium transition-transform"
+                  style={{
+                    width: cellSize, height: Math.round(cellSize * 0.62),
+                    background: correlationFill(val), color: correlationText(val),
+                    outline: isDiag ? "1px solid var(--color-line-strong)" : "none",
+                    transform: isActive ? "scale(1.08)" : "scale(1)",
+                    cursor: isDiag ? "default" : "crosshair",
+                  }}
+                >
+                  {showValue ? val.toFixed(2) : ""}
+                </div>
+              );
+            })}
           </div>
         ))}
-        {tooltip && (
-          <div style={{ marginLeft: "auto", fontSize: "12px", color: "rgba(255,255,255,0.50)", background: "rgba(255,255,255,0.04)", borderRadius: "7px", padding: "5px 12px" }}>
-            <strong style={{ color: "var(--gold)" }}>{tooltip.rowCol}</strong>
-            {" ↔ "}
-            <strong style={{ color: "var(--gold)" }}>{tooltip.colCol}</strong>
-            {" — r = "}
-            <strong style={{ color: "rgba(255,255,255,0.85)" }}>{tooltip.val.toFixed(3)}</strong>
-          </div>
-        )}
+
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-3">
+          <span className="text-[10px] text-ink-faint">Legend</span>
+          {LEGEND.map((l) => (
+            <div key={l.label} className="flex items-center gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-sm border border-line" style={{ background: l.fill }} />
+              <span className="text-[10px] text-ink-faint">{l.label}</span>
+            </div>
+          ))}
+          {tip && (
+            <div className="ml-auto rounded-md bg-paper-sunken px-3 py-1 text-[12px] text-ink-soft">
+              <strong className="text-ink">{tip.rowCol}</strong> &harr; <strong className="text-ink">{tip.colCol}</strong>
+              {" — r = "}<strong className="font-mono text-ink">{tip.val.toFixed(3)}</strong>
+            </div>
+          )}
+        </div>
       </div>
-    </motion.div>
+    </SectionCard>
   );
 }
 
-/* ─────────────────────────────────────────────
-   RELATIONSHIPS TAB
-───────────────────────────────────────────── */
 function RelationshipsTab({ result }) {
   const { relationships } = result;
   const { cols } = relationships;
 
   if (!cols.length) {
     return (
-      <div className="dash-card" style={{ textAlign: "center", padding: "40px" }}>
-        <div className="dash-stat-label">Not enough numeric columns for relationship analysis.</div>
-      </div>
+      <SectionCard>
+        <div className="py-8 text-center text-[13px] text-ink-faint">Not enough numeric columns for relationship analysis.</div>
+      </SectionCard>
     );
   }
 
   return (
-    <div>
+    <div className="space-y-4">
       <LeakageWarnings suspects={relationships.leakageSuspects} />
-      <RelationshipObservations observations={relationships.observations} />
-      <CorrelationRanking  relationships={relationships} />
-      <CorrelationHeatmap  relationships={relationships} />
+      <Observations observations={relationships.observations} />
+      <CorrelationRanking strongRelationships={relationships.strongRelationships} />
+      <CorrelationHeatmap relationships={relationships} />
     </div>
   );
 }
