@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useLocation }         from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -6,7 +6,9 @@ import Header           from "../components/layout/Header.jsx";
 import UploadStep       from "../components/analyze/UploadStep/UploadStep.jsx";
 import TargetStep       from "../components/analyze/TargetStep/TargetStep.jsx";
 import ProcessingStep   from "../components/analyze/ProcessingStep/ProcessingStep.jsx";
-import ResultsDashboard from "../components/analyze/ResultsDashboard/ResultsDashboard.jsx";
+/* Only reached at step 3 — kept out of the upload/target path's initial chunk. */
+const ResultsDashboard = lazy(() =>
+  import("../components/analyze/ResultsDashboard/ResultsDashboard.jsx"));
 
 import { analyzeDataset, detectTarget, generateSampleData }
   from "../components/utils/core/index.js";
@@ -124,10 +126,14 @@ function Analyze() {
 
           {step === 3 && (
             <motion.div key="results" {...stepVariants}>
-              <ResultsDashboard
-                result={analysisResult}
-                onReset={handleReset}
-              />
+              {/* Suspense sits inside the motion.div so AnimatePresence keeps
+                  tracking a single keyed child across step transitions. */}
+              <Suspense fallback={<div style={{ minHeight: "60vh" }} />}>
+                <ResultsDashboard
+                  result={analysisResult}
+                  onReset={handleReset}
+                />
+              </Suspense>
             </motion.div>
           )}
 
