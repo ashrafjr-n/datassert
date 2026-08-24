@@ -1,3 +1,7 @@
+Read vibe.md at the start of every session and after every /clear — it governs how
+we work together. Also read react-principles.md  — it governs how code should be written. This file provides
+project facts (protected files, current components, pages, colors).
+
 # CLAUDE.md
 
 Guidance for working in this repo.
