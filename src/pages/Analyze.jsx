@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation }         from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -8,7 +8,7 @@ import TargetStep       from "../components/analyze/TargetStep/TargetStep.jsx";
 import ProcessingStep   from "../components/analyze/ProcessingStep/ProcessingStep.jsx";
 import ResultsDashboard from "../components/analyze/ResultsDashboard/ResultsDashboard.jsx";
 
-import { analyzeDataset, detectTarget, detectColumnRoles, generateSampleData }
+import { analyzeDataset, detectTarget, generateSampleData }
   from "../components/utils/core/index.js";
 
 /* ─────────────────────────────────────────────
