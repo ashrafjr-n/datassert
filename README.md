@@ -24,3 +24,24 @@ never leaves your machine.
   target readiness, with a letter grade and per-dimension breakdown
 - **Recommendations** — prioritized, human-readable next steps for making the dataset
   ML-ready
+
+## Getting started
+
+Requires Node.js 20+.
+
+```bash
+npm install
+npm run dev
+```
+
+The dev server prints a local URL. No environment variables and no backend service are
+required — the app is fully static.
+
+### Scripts
+
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Start the Vite dev server with HMR |
+| `npm run build` | Production build into `dist/` |
+| `npm run preview` | Serve the built output locally |
+| `npm run lint` | Run ESLint over the project |
