@@ -1,138 +1,119 @@
-import { lazy, Suspense, useState } from "react";
-import { useLocation }         from "react-router-dom";
+import { lazy, Suspense, useState, useEffect } from "react";
+import { useLocation, useNavigate, Navigate } from "react-router-dom";
+import { getPendingDataset } from "../lib/datasetHandoff.js";
 import { AnimatePresence, motion } from "framer-motion";
+import { LoaderCircle } from "lucide-react";
 
-import Header           from "../components/layout/Header.jsx";
-import UploadStep       from "../components/analyze/UploadStep/UploadStep.jsx";
-import TargetStep       from "../components/analyze/TargetStep/TargetStep.jsx";
-import ProcessingStep   from "../components/analyze/ProcessingStep/ProcessingStep.jsx";
-/* Only reached at step 3 — kept out of the upload/target path's initial chunk. */
+import Header         from "../components/layout/Header.jsx";
+import TargetStep     from "../components/analyze/TargetStep/TargetStep.jsx";
+/* Only reached at the results step — kept out of the target/processing path's chunk. */
 const ResultsDashboard = lazy(() =>
   import("../components/analyze/ResultsDashboard/ResultsDashboard.jsx"));
 
 import { analyzeDataset, detectTarget, generateSampleData }
   from "../components/utils/core/index.js";
 
-/* ─────────────────────────────────────────────
-   STEP TRANSITION VARIANTS
-───────────────────────────────────────────── */
 const stepVariants = {
-  initial:  { opacity: 0, y: 24 },
-  animate:  { opacity: 1, y: 0,  transition: { duration: 0.4, ease: "easeOut" } },
-  exit:     { opacity: 0, y: -16, transition: { duration: 0.28, ease: "easeIn" } },
+  initial:  { opacity: 0, y: 16 },
+  animate:  { opacity: 1, y: 0,  transition: { duration: 0.32, ease: "easeOut" } },
+  exit:     { opacity: 0, y: -10, transition: { duration: 0.2,  ease: "easeIn"  } },
 };
 
-/* ─────────────────────────────────────────────
-   ANALYZE PAGE
-───────────────────────────────────────────── */
-function Analyze() {
-  const location = useLocation();
-
-  /* ── Sample mode (?sample=1): boot straight to the results step.
-     Computed lazily during the FIRST render rather than in an effect, so there is
-     no flash of the upload step and no cascading re-render. Like the mount-only
-     effect it replaces, this reads the URL once — navigating to ?sample=1 without
-     a remount does not re-trigger it. ── */
-  const [sample] = useState(() => {
-    if (!new URLSearchParams(location.search).get("sample")) return null;
-
-    const { data, columns: cols } = generateSampleData();
-    const detectedTarget          = detectTarget(cols, data);
-    return { data, cols, target: detectedTarget, result: analyzeDataset(data, cols, detectedTarget) };
-  });
-
-  const [step,           setStep]           = useState(sample ? 3 : 0);
-  const [csvData,        setCsvData]        = useState(sample?.data   ?? null);
-  const [columns,        setColumns]        = useState(sample?.cols   ?? []);
-  const [target,         setTarget]         = useState(sample?.target ?? "");
-  const [analysisResult, setAnalysisResult] = useState(sample?.result ?? null);
-
-  /* ── Step 0 → 1: CSV parsed ── */
-  const handleUploadComplete = (data, cols) => {
-    setCsvData(data);
-    setColumns(cols);
-    const auto = detectTarget(cols, data);
-    setTarget(auto);
-    setStep(1);
-  };
-
-  /* ── Step 1 → 2: target confirmed ── */
-  const handleTargetConfirmed = (selectedTarget) => {
-    setTarget(selectedTarget);
-    setStep(2);
-  };
-
-  /* ── Step 2 → 3: analysis done ── */
-  const handleAnalysisComplete = () => {
-    const result = analyzeDataset(csvData, columns, target);
-    setAnalysisResult(result);
-    setStep(3);
-  };
-
-  /* ── Reset to start ── */
-  const handleReset = () => {
-    setCsvData(null);
-    setColumns([]);
-    setTarget("");
-    setAnalysisResult(null);
-    setStep(0);
-  };
+/* Minimal spinner-only loading step. No copy, no fake progress — see frontend.md
+   "Processing step" spec. Held for a minimum visible duration so a near-instant
+   analyzeDataset() call never flashes for a single frame. */
+const MIN_VISIBLE_MS = 550;
+function ProcessingStep({ onComplete }) {
+  // Subscribing to a real external timer — the one legitimate useEffect case here
+  // (react-principles.md §6), not a derived-data computation.
+  useEffect(() => {
+    const timer = setTimeout(onComplete, MIN_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
 
   return (
-    <div style={{
-      minHeight:       "100vh",
-      width:           "100%",
-      display:         "flex",
-      flexDirection:   "column",
-      background:      "var(--surface-base)",
-      color:           "var(--text-primary)",
-    }}>
+    <div className="flex min-h-[70vh] items-center justify-center">
+      <LoaderCircle size={28} className="animate-spin text-gold-ink" />
+    </div>
+  );
+}
+
+function Analyze() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  /* Single entry point for how this page can be reached, computed once on first
+     render (no effect, no flash): either `?sample=1` (generated demo data, skips
+     straight to results) or a real upload handed off from Home via the
+     datasetHandoff module singleton (NOT router state — see that file for why).
+     Anything else — a direct visit or a hard refresh with nothing pending — has
+     nothing to analyze and is redirected back to "/" below. */
+  const [entry] = useState(() => {
+    if (new URLSearchParams(location.search).get("sample")) {
+      const { data, columns: cols } = generateSampleData();
+      const detectedTarget          = detectTarget(cols, data);
+      return {
+        step: "results", data, columns: cols, target: detectedTarget,
+        result: analyzeDataset(data, cols, detectedTarget),
+      };
+    }
+    const pending = getPendingDataset();
+    if (pending) {
+      const { data, columns: cols } = pending;
+      return { step: "target", data, columns: cols, target: detectTarget(cols, data), result: null };
+    }
+    return null;
+  });
+
+  const [step,           setStep]           = useState(entry?.step   ?? "target");
+  const [csvData]                           = useState(entry?.data    ?? null);
+  const [columns]                           = useState(entry?.columns ?? []);
+  const [target,         setTarget]         = useState(entry?.target ?? "");
+  const [analysisResult, setAnalysisResult] = useState(entry?.result ?? null);
+
+  if (!entry) return <Navigate to="/" replace />;
+
+  const handleTargetConfirmed = (selectedTarget) => {
+    setTarget(selectedTarget);
+    setStep("processing");
+  };
+
+  const handleAnalysisComplete = () => {
+    setAnalysisResult(analyzeDataset(csvData, columns, target));
+    setStep("results");
+  };
+
+  const handleReset = () => navigate("/");
+
+  return (
+    <div className="min-h-screen bg-paper text-ink">
       <Header />
 
-      <main style={{
-        flex: 1,
-        width: "100%",
-        }}>
+      <main className="pt-16">
         <AnimatePresence mode="wait">
 
-          {step === 0 && (
-            <motion.div key="upload" {...stepVariants}>
-              <UploadStep onComplete={handleUploadComplete} />
-            </motion.div>
-          )}
-
-          {step === 1 && (
+          {step === "target" && (
             <motion.div key="target" {...stepVariants}>
               <TargetStep
                 columns={columns}
                 csvData={csvData}
                 initialTarget={target}
                 onConfirm={handleTargetConfirmed}
-                onBack={() => setStep(0)}
+                onBack={handleReset}
               />
             </motion.div>
           )}
 
-          {step === 2 && (
+          {step === "processing" && (
             <motion.div key="processing" {...stepVariants}>
-              <ProcessingStep
-                csvData={csvData}
-                columns={columns}
-                target={target}
-                onComplete={handleAnalysisComplete}
-              />
+              <ProcessingStep onComplete={handleAnalysisComplete} />
             </motion.div>
           )}
 
-          {step === 3 && (
+          {step === "results" && (
             <motion.div key="results" {...stepVariants}>
-              {/* Suspense sits inside the motion.div so AnimatePresence keeps
-                  tracking a single keyed child across step transitions. */}
-              <Suspense fallback={<div style={{ minHeight: "60vh" }} />}>
-                <ResultsDashboard
-                  result={analysisResult}
-                  onReset={handleReset}
-                />
+              <Suspense fallback={<div className="min-h-[60vh]" />}>
+                <ResultsDashboard result={analysisResult} onReset={handleReset} />
               </Suspense>
             </motion.div>
           )}
