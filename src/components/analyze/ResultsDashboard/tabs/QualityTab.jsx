@@ -189,13 +189,17 @@ function MissingValuesRanking({ missingCols }) {
 function QualityTab({ result }) {
   const { quality, meta } = result;
 
-  // Early-return when row count isn't ready yet — avoids bars showing ~100%
-  // due to division-by-1 fallback on stale data.
+  // Row count isn't ready yet → render a skeleton instead of bars showing ~100%
+  // from a division-by-1 fallback on stale data.
   const totalRows = meta?.rows;
-  if (!(totalRows > 0)) return <LoadingSkeleton />;
+  const rowsReady = totalRows > 0;
+
+  // Rules of Hooks: these must run on EVERY render, so they sit above the early
+  // return below and no-op internally until the row count is ready.
+  const issues = quality?.columnsWithIssues;
 
   const missingCols = useMemo(() => (
-    quality.columnsWithIssues
+    !rowsReady ? [] : (issues ?? [])
       .filter(c => c.issue === "missing")
       .map(c => {
         const count = parseCount(c.detail);
@@ -204,11 +208,13 @@ function QualityTab({ result }) {
         return { col: c.col, count, pct };
       })
       .sort((a, b) => b.count - a.count)
-  ), [quality.columnsWithIssues, totalRows]);
+  ), [issues, totalRows, rowsReady]);
 
   const otherIssues = useMemo(() => (
-    quality.columnsWithIssues.filter(c => c.issue !== "missing")
-  ), [quality.columnsWithIssues]);
+    (issues ?? []).filter(c => c.issue !== "missing")
+  ), [issues]);
+
+  if (!rowsReady) return <LoadingSkeleton />;
 
   const score      = quality.qualityScore;
   const scoreColor =
