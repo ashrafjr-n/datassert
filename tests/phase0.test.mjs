@@ -39,7 +39,26 @@ const { header, rows } = parseCsv(
 );
 
 let failures = 0;
-console.log("Fix #1 — sample stdDev (ddof=1) vs reference harness\n");
+
+/* ── STEP 0 — UI enum-lock: locks the ROLE.* string values OverviewTab now
+   depends on directly (numeric/categorical/binary/identifier/temporal). If
+   roles.constants.js ever changes one of these strings, this fails loudly
+   instead of the UI silently breaking (blank pills, empty role groups). ── */
+console.log("STEP 0 — UI enum-lock (ROLE.* string values OverviewTab depends on)\n");
+
+const enumLockChecks = [
+  ['ROLE.NUMERIC === "numeric"',         ROLE.NUMERIC     === "numeric"],
+  ['ROLE.CATEGORICAL === "categorical"', ROLE.CATEGORICAL === "categorical"],
+  ['ROLE.BINARY === "binary"',           ROLE.BINARY      === "binary"],
+  ['ROLE.IDENTIFIER === "identifier"',   ROLE.IDENTIFIER  === "identifier"],
+  ['ROLE.TEMPORAL === "temporal"',       ROLE.TEMPORAL    === "temporal"],
+];
+for (const [msg, ok] of enumLockChecks) {
+  if (!ok) failures++;
+  console.log(`${ok ? "PASS" : "FAIL"}  ${msg}`);
+}
+
+console.log("\nFix #1 — sample stdDev (ddof=1) vs reference harness\n");
 
 for (const col of header) {
   const vals = rows.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
