@@ -115,12 +115,12 @@ function PriorityInsightsCard({ insights, recommendations }) {
    COLUMN ROLE PILL
 ───────────────────────────────────────────── */
 const ROLE_PILL = {
-  numeric:     { label: "#",  cls: "dash-pill--neutral" },
-  categorical: { label: "Aa", cls: "dash-pill--neutral" },
-  binary:      { label: "01", cls: "dash-pill--success" },
-  identifier:  { label: "ID", cls: "dash-pill--warning" },
-  temporal:    { label: "◷",  cls: "dash-pill--info"    },
-  target:      { label: "▶",  cls: "dash-pill--gold"    },
+  [ROLE.NUMERIC]:     { label: "#",  cls: "dash-pill--neutral" },
+  [ROLE.CATEGORICAL]: { label: "Aa", cls: "dash-pill--neutral" },
+  [ROLE.BINARY]:      { label: "01", cls: "dash-pill--success" },
+  [ROLE.IDENTIFIER]:  { label: "ID", cls: "dash-pill--warning" },
+  [ROLE.TEMPORAL]:    { label: "◷",  cls: "dash-pill--info"    },
+  target:             { label: "▶",  cls: "dash-pill--gold"    },
 };
 
 /* ─────────────────────────────────────────────
