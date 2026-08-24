@@ -62,3 +62,24 @@ which has no Python equivalent, is asserted against intended-role maps declared 
 file itself.
 
 Run it after any change under `src/components/utils/core/`.
+
+## Project structure
+
+```text
+src/
+  App.jsx                     routes: / (landing), /analyze (the tool)
+  pages/
+    Analyze.jsx               step machine: Upload → Target → Processing → Results
+  components/
+    analyze/                  uploader, target picker, tabbed results dashboard
+    hero/ home/ layout/       marketing site
+    utils/core/               the analysis engine (pure functions, no side effects)
+      roles.constants.js      ROLE enum — the single source of truth for role strings
+      index.js                analyzeDataset() orchestrator
+      detectors/              column-role classification, target guessing
+      analyzers/              quality, statistics, relationships
+      scoring/                health score
+      intelligence/           insights and recommendations
+      helpers.js              shared numeric utilities
+tests/                        analysis-engine regression suite + Python reference
+```
