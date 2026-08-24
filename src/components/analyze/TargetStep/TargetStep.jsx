@@ -1,28 +1,10 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import "./target.css";
+import { detectColumnRoles } from "../../utils/core/detectors/roles.js";
+import { ROLE }              from "../../utils/core/roles.constants.js";
 
-/* ─────────────────────────────────────────────
-   HELPERS
-───────────────────────────────────────────── */
-function detectColType(data, col) {
-  // NOTE (Phase 1 / Step 2c): this is TargetStep's own lightweight guesser for the
-  // target-picker pill — independent of core roles. ROLE.TEMPORAL is intentionally NOT
-  // handled here yet, so a date target shows as "categorical". Deferred: wire in
-  // isTemporalColumn (detectors/temporal.js) if we want the picker to label dates.
-  const sample = data.slice(0, 100).map(r => r[col]).filter(v => v !== "" && v != null);
-  if (!sample.length) return "unknown";
-  const unique  = [...new Set(sample.map(v => String(v).toLowerCase().trim()))];
-  const numeric = sample.filter(v => !isNaN(parseFloat(v)) && isFinite(v));
-  if (unique.length === 2 && (
-    (unique.includes("0") && unique.includes("1")) ||
-    (unique.includes("yes") && unique.includes("no")) ||
-    (unique.includes("true") && unique.includes("false"))
-  )) return "binary";
-  if (numeric.length / sample.length >= 0.8) return "numeric";
-  return "categorical";
-}
+import "./target.css";
 
 /* ─────────────────────────────────────────────
    CONSTANTS
@@ -33,12 +15,18 @@ const TARGET_MODES = [
   { id: "none",   label: "No Target",      desc: "Unsupervised / EDA only" },
 ];
 
+/* Keyed by the ROLE enum — the picker now labels columns with the SAME roles the
+   analysis engine will assign, so the pill can never disagree with the report.
+   identifier/temporal reuse the neutral style; no new pill styling was added. */
 const PILL_CLASS = {
-  numeric:     "target-col-info__pill--numeric",
-  categorical: "target-col-info__pill--categorical",
-  binary:      "target-col-info__pill--binary",
-  unknown:     "target-col-info__pill--categorical",
+  [ROLE.NUMERIC]:     "target-col-info__pill--numeric",
+  [ROLE.CATEGORICAL]: "target-col-info__pill--categorical",
+  [ROLE.BINARY]:      "target-col-info__pill--binary",
+  [ROLE.IDENTIFIER]:  "target-col-info__pill--categorical",
+  [ROLE.TEMPORAL]:    "target-col-info__pill--categorical",
 };
+
+const FALLBACK_PILL = PILL_CLASS[ROLE.CATEGORICAL];
 
 /* ─────────────────────────────────────────────
    MODE PANEL — single animated block
@@ -46,7 +34,7 @@ const PILL_CLASS = {
 function ModePanel({ mode, columns, colTypes, selected, setSelected, initialTarget }) {
   if (mode === "auto") {
     if (!initialTarget) return null;
-    const type = colTypes[initialTarget] || "unknown";
+    const type = colTypes[initialTarget] ?? ROLE.CATEGORICAL;
     return (
       <div className="target-col-info" style={{ marginBottom: "28px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
@@ -54,7 +42,7 @@ function ModePanel({ mode, columns, colTypes, selected, setSelected, initialTarg
           <span className="target-col-info__name">{initialTarget}</span>
         </div>
         <div className="target-col-info__pills">
-          <span className={`target-col-info__pill ${PILL_CLASS[type] || PILL_CLASS.unknown}`}>
+          <span className={`target-col-info__pill ${PILL_CLASS[type] ?? FALLBACK_PILL}`}>
             {type}
           </span>
           <span className="target-col-info__pill target-col-info__pill--categorical"
@@ -67,8 +55,8 @@ function ModePanel({ mode, columns, colTypes, selected, setSelected, initialTarg
   }
 
   if (mode === "select") {
-    const type      = colTypes[selected] || "unknown";
-    const pillClass = PILL_CLASS[type] || PILL_CLASS.unknown;
+    const type      = colTypes[selected] ?? ROLE.CATEGORICAL;
+    const pillClass = PILL_CLASS[type] ?? FALLBACK_PILL;
     return (
       <div className="target-selector" style={{ marginBottom: "28px" }}>
         <div className="target-selector__dropdown-wrap">
@@ -122,11 +110,13 @@ function TargetStep({ columns, csvData, initialTarget, onConfirm, onBack }) {
   const [mode,     setMode]     = useState("auto");
   const [selected, setSelected] = useState(initialTarget || columns[0] || "");
 
-  const colTypes = useMemo(() => {
-    const map = {};
-    columns.forEach(col => { map[col] = detectColType(csvData, col); });
-    return map;
-  }, [columns, csvData]);
+  // Single source of truth: the same role detector the analyzer runs. Passing a null
+  // target keeps every column's natural role — so an ID column is still surfaced as
+  // "identifier" here, which is exactly the warning a user needs while picking.
+  const colTypes = useMemo(
+    () => detectColumnRoles(csvData ?? [], columns, null),
+    [columns, csvData],
+  );
 
   const effectiveTarget =
     mode === "none"   ? null :
