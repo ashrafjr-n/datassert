@@ -51,17 +51,26 @@ required — the app is fully static.
 The analysis engine has a dependency-free regression suite that runs on plain Node:
 
 ```bash
-node tests/phase0.test.mjs
+npm test
 ```
 
-Statistical results are asserted against a Python reference (pandas/scipy) rather than
-hand-written expectations. `tests/reference/generate_reference.py` produces
-`tests/reference/expected.json` from the fixture CSVs in `tests/reference/datasets/`; the
-JavaScript implementation is then checked against it to a 1e-6 tolerance. Role detection,
-which has no Python equivalent, is asserted against intended-role maps declared in the test
-file itself.
+This runs two files:
 
-Run it after any change under `src/components/utils/core/`.
+- **`tests/phase0.test.mjs`** — statistical correctness. Results are asserted against a
+  Python reference (pandas/scipy) rather than hand-written expectations.
+  `tests/reference/generate_reference.py` produces `tests/reference/expected.json` from the
+  fixture CSVs in `tests/reference/datasets/`; the JS implementation is checked against it
+  to a 1e-6 tolerance. Role detection, which has no Python equivalent, is asserted against
+  intended-role maps declared in the test file itself.
+- **`tests/engine-contract.test.mjs`** — the **output shape** of `analyzeDataset()`: the
+  exact key set of the top-level result and of every nested object/array-element (`meta`,
+  `quality`, `statistics[]`, `visualizations[]`, `relationships`, `classBalance`,
+  `insights[]`, `healthScore`, `recommendations[]`). This is the contract a UI is built
+  against — it exists so a frontend rewrite (or any new consumer) can trust the engine's
+  shape without re-deriving it from source, and so a future change to the engine that
+  breaks that shape fails here instead of silently.
+
+Run `npm test` after any change under `src/components/utils/core/`.
 
 ## Project structure
 
@@ -82,7 +91,7 @@ src/
       scoring/                health score
       intelligence/           insights and recommendations
       helpers.js              shared numeric utilities
-tests/                        analysis-engine regression suite + Python reference
+tests/                        analysis-engine regression suite + output-shape contract
 ```
 
 ## Tech stack
