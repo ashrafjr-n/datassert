@@ -26,27 +26,24 @@ const stepVariants = {
 function Analyze() {
   const location = useLocation();
 
-  const [step,           setStep]           = useState(0);
-  const [csvData,        setCsvData]        = useState(null);
-  const [columns,        setColumns]        = useState([]);
-  const [target,         setTarget]         = useState("");
-  const [analysisResult, setAnalysisResult] = useState(null);
-
-  /* ── Sample mode: load instantly at step 3 ── */
-  useEffect(() => {
-    const isSample = new URLSearchParams(location.search).get("sample");
-    if (!isSample) return;
+  /* ── Sample mode (?sample=1): boot straight to the results step.
+     Computed lazily during the FIRST render rather than in an effect, so there is
+     no flash of the upload step and no cascading re-render. Like the mount-only
+     effect it replaces, this reads the URL once — navigating to ?sample=1 without
+     a remount does not re-trigger it. ── */
+  const [sample] = useState(() => {
+    if (!new URLSearchParams(location.search).get("sample")) return null;
 
     const { data, columns: cols } = generateSampleData();
     const detectedTarget          = detectTarget(cols, data);
-    const result                  = analyzeDataset(data, cols, detectedTarget);
+    return { data, cols, target: detectedTarget, result: analyzeDataset(data, cols, detectedTarget) };
+  });
 
-    setCsvData(data);
-    setColumns(cols);
-    setTarget(detectedTarget);
-    setAnalysisResult(result);
-    setStep(3);
-  }, []);
+  const [step,           setStep]           = useState(sample ? 3 : 0);
+  const [csvData,        setCsvData]        = useState(sample?.data   ?? null);
+  const [columns,        setColumns]        = useState(sample?.cols   ?? []);
+  const [target,         setTarget]         = useState(sample?.target ?? "");
+  const [analysisResult, setAnalysisResult] = useState(sample?.result ?? null);
 
   /* ── Step 0 → 1: CSV parsed ── */
   const handleUploadComplete = (data, cols) => {
