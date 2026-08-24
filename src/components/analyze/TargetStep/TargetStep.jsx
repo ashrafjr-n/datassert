@@ -1,83 +1,72 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, ArrowLeft, Info, ChevronDown } from "lucide-react";
 
 import { detectColumnRoles } from "../../utils/core/detectors/roles.js";
 import { ROLE }              from "../../utils/core/roles.constants.js";
 
-import "./target.css";
-
-/* ─────────────────────────────────────────────
-   CONSTANTS
-───────────────────────────────────────────── */
 const TARGET_MODES = [
-  { id: "auto",   label: "Auto Detect",    desc: "Recommended"           },
-  { id: "select", label: "Select Column",  desc: "Choose manually"       },
-  { id: "none",   label: "No Target",      desc: "Unsupervised / EDA only" },
+  { id: "auto",   label: "Auto Detect"   },
+  { id: "select", label: "Select Column" },
+  { id: "none",   label: "No Target"     },
 ];
 
-/* Keyed by the ROLE enum — the picker now labels columns with the SAME roles the
-   analysis engine will assign, so the pill can never disagree with the report.
-   identifier/temporal reuse the neutral style; no new pill styling was added. */
-const PILL_CLASS = {
-  [ROLE.NUMERIC]:     "target-col-info__pill--numeric",
-  [ROLE.CATEGORICAL]: "target-col-info__pill--categorical",
-  [ROLE.BINARY]:      "target-col-info__pill--binary",
-  [ROLE.IDENTIFIER]:  "target-col-info__pill--categorical",
-  [ROLE.TEMPORAL]:    "target-col-info__pill--categorical",
+/* Status-pill mapping, keyed by the ROLE enum — the picker labels columns with the
+   SAME roles the analysis engine assigns, so this can never disagree with the
+   report (see frontend.md "Target step"). identifier gets the warning tint since
+   it's the one role the engine recommends dropping; temporal gets the gold tint
+   as a deliberate, sparing accent — dates are the rarest/most notable role. */
+const PILL_STYLE = {
+  [ROLE.NUMERIC]:     "bg-info-tint text-info",
+  [ROLE.CATEGORICAL]: "bg-paper text-ink-soft border border-line",
+  [ROLE.BINARY]:      "bg-success-tint text-success",
+  [ROLE.IDENTIFIER]:  "bg-warning-tint text-warning",
+  [ROLE.TEMPORAL]:    "bg-gold-tint text-gold-ink",
 };
+const FALLBACK_PILL = PILL_STYLE[ROLE.CATEGORICAL];
 
-const FALLBACK_PILL = PILL_CLASS[ROLE.CATEGORICAL];
+function RolePill({ role }) {
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[11px] font-medium uppercase tracking-wide ${PILL_STYLE[role] ?? FALLBACK_PILL}`}>
+      {role}
+    </span>
+  );
+}
 
-/* ─────────────────────────────────────────────
-   MODE PANEL — single animated block
-───────────────────────────────────────────── */
 function ModePanel({ mode, columns, colTypes, selected, setSelected, initialTarget }) {
   if (mode === "auto") {
     if (!initialTarget) return null;
     const type = colTypes[initialTarget] ?? ROLE.CATEGORICAL;
     return (
-      <div className="target-col-info" style={{ marginBottom: "28px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-          <div className="target-selector__hint-dot" />
-          <span className="target-col-info__name">{initialTarget}</span>
-        </div>
-        <div className="target-col-info__pills">
-          <span className={`target-col-info__pill ${PILL_CLASS[type] ?? FALLBACK_PILL}`}>
-            {type}
-          </span>
-          <span className="target-col-info__pill target-col-info__pill--categorical"
-            style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.30)" }}>
-            auto-detected
-          </span>
+      <div className="flex items-center justify-between rounded-lg border border-line bg-paper-sunken px-4 py-3">
+        <span className="font-mono text-[13px] text-ink">{initialTarget}</span>
+        <div className="flex items-center gap-2">
+          <RolePill role={type} />
+          <span className="text-[11px] text-ink-faint">auto-detected</span>
         </div>
       </div>
     );
   }
 
   if (mode === "select") {
-    const type      = colTypes[selected] ?? ROLE.CATEGORICAL;
-    const pillClass = PILL_CLASS[type] ?? FALLBACK_PILL;
+    const type = colTypes[selected] ?? ROLE.CATEGORICAL;
     return (
-      <div className="target-selector" style={{ marginBottom: "28px" }}>
-        <div className="target-selector__dropdown-wrap">
+      <div className="space-y-3">
+        <div className="relative">
           <select
-            className="target-selector__dropdown"
             value={selected}
-            onChange={e => setSelected(e.target.value)}
+            onChange={(e) => setSelected(e.target.value)}
+            className="w-full appearance-none rounded-lg border border-line-strong bg-paper px-4 py-2.5 font-mono text-[13px] text-ink focus:border-gold focus:outline-none"
           >
-            {columns.map(col => (
-              <option key={col} value={col}>
-                {col} — {colTypes[col]}
-              </option>
+            {columns.map((col) => (
+              <option key={col} value={col}>{col} — {colTypes[col]}</option>
             ))}
           </select>
-          <span className="target-selector__chevron">▾</span>
+          <ChevronDown size={14} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink-faint" />
         </div>
-        <div className="target-col-info" style={{ marginTop: "10px" }}>
-          <span className="target-col-info__name">{selected}</span>
-          <div className="target-col-info__pills">
-            <span className={`target-col-info__pill ${pillClass}`}>{type}</span>
-          </div>
+        <div className="flex items-center justify-between rounded-lg border border-line bg-paper-sunken px-4 py-3">
+          <span className="font-mono text-[13px] text-ink">{selected}</span>
+          <RolePill role={type} />
         </div>
       </div>
     );
@@ -85,17 +74,10 @@ function ModePanel({ mode, columns, colTypes, selected, setSelected, initialTarg
 
   if (mode === "none") {
     return (
-      <div style={{
-        display: "flex", alignItems: "flex-start", gap: "10px",
-        padding: "12px 14px",
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: "10px", marginBottom: "28px",
-        fontSize: "12px", color: "rgba(255,255,255,0.35)", lineHeight: "1.6",
-      }}>
-        <span style={{ flexShrink: 0, marginTop: "1px" }}>ℹ</span>
-        Class Balance and ML Task Type will be unavailable without a target column.
-        All other analysis will run normally.
+      <div className="flex items-start gap-2.5 rounded-lg border border-line bg-paper-sunken px-4 py-3 text-[12px] leading-relaxed text-ink-soft">
+        <Info size={14} className="mt-0.5 shrink-0 text-ink-faint" />
+        Class balance and ML task type will be unavailable without a target
+        column. Every other section of the report runs normally.
       </div>
     );
   }
@@ -103,9 +85,6 @@ function ModePanel({ mode, columns, colTypes, selected, setSelected, initialTarg
   return null;
 }
 
-/* ─────────────────────────────────────────────
-   TARGET STEP
-───────────────────────────────────────────── */
 function TargetStep({ columns, csvData, initialTarget, onConfirm, onBack }) {
   const [mode,     setMode]     = useState("auto");
   const [selected, setSelected] = useState(initialTarget || columns[0] || "");
@@ -119,93 +98,59 @@ function TargetStep({ columns, csvData, initialTarget, onConfirm, onBack }) {
   );
 
   const effectiveTarget =
-    mode === "none"   ? null :
-    mode === "auto"   ? initialTarget :
+    mode === "none" ? null :
+    mode === "auto" ? initialTarget :
     selected;
 
   return (
-    <div className="target-page">
-      <div className="target-card">
+    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-xl items-center px-6 py-16">
+      <div className="w-full rounded-2xl border border-line bg-paper p-8">
 
-        {/* Eyebrow */}
-        <motion.div
-          className="target-card__eyebrow"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          <div className="target-card__eyebrow-dot" />
-          Step 2 of 4
-        </motion.div>
+        <div className="text-[11px] font-medium uppercase tracking-widest text-ink-faint">
+          Configuration
+        </div>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
+          Select a target column
+        </h1>
+        <p className="mt-1.5 text-[13px] text-ink-soft">
+          Determines the ML task type, class-balance report, and leakage checks.
+        </p>
 
-        {/* Title */}
-        <motion.h1
-          className="target-card__title"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05, duration: 0.4 }}
-        >
-          Dataset Detected
-        </motion.h1>
-
-        <motion.p
-          className="target-card__subtitle"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.4 }}
-        >
-          Choose how to handle the target column before running the analysis.
-        </motion.p>
-
-        {/* Dataset summary */}
-        <motion.div
-          className="target-summary"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
-        >
-          <div className="target-summary__card">
-            <div className="target-summary__label">Rows</div>
-            <div className="target-summary__value">{csvData.length.toLocaleString()}</div>
+        <div className="mt-6 flex gap-6 border-y border-line py-4">
+          <div>
+            <div className="font-mono text-lg font-semibold text-ink">{csvData.length.toLocaleString()}</div>
+            <div className="text-[11px] uppercase tracking-wide text-ink-faint">Rows</div>
           </div>
-          <div className="target-summary__card">
-            <div className="target-summary__label">Columns</div>
-            <div className="target-summary__value">{columns.length}</div>
+          <div>
+            <div className="font-mono text-lg font-semibold text-ink">{columns.length}</div>
+            <div className="text-[11px] uppercase tracking-wide text-ink-faint">Columns</div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Mode selector */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18, duration: 0.4 }}
-        >
-          <div className="target-selector__label">Target Column</div>
-          <div className="target-mode-group">
-            {TARGET_MODES.map(opt => (
-              <div
-                key={opt.id}
-                className={`target-mode-option${mode === opt.id ? " target-mode-option--active" : ""}`}
-                onClick={() => setMode(opt.id)}
-              >
-                <div className="target-mode-option__radio">
-                  {mode === opt.id && <div className="target-mode-option__radio-dot" />}
-                </div>
-                <span className="target-mode-option__label">{opt.label}</span>
-                <span className="target-mode-option__desc">{opt.desc}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+        {/* Segmented control */}
+        <div className="mt-6 flex gap-1 rounded-lg bg-paper-sunken p-1">
+          {TARGET_MODES.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setMode(opt.id)}
+              className={`flex-1 rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
+                mode === opt.id ? "bg-paper text-ink shadow-sm" : "text-ink-soft hover:text-ink"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
 
-        {/* Single AnimatePresence — key changes with mode */}
         <AnimatePresence mode="wait">
           <motion.div
             key={mode}
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.18 }}
+            transition={{ duration: 0.15 }}
+            className="mt-4"
           >
             <ModePanel
               mode={mode}
@@ -218,24 +163,24 @@ function TargetStep({ columns, csvData, initialTarget, onConfirm, onBack }) {
           </motion.div>
         </AnimatePresence>
 
-        {/* Actions */}
-        <motion.div
-          className="target-actions"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-        >
+        <div className="mt-7 flex items-center justify-between">
           <button
-            className="target-btn-primary"
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-soft hover:text-ink"
+          >
+            <ArrowLeft size={14} />
+            Back
+          </button>
+          <button
+            type="button"
             onClick={() => onConfirm(effectiveTarget)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-5 py-2.5 text-[13px] font-semibold text-paper hover:bg-ink/90"
           >
             Start Analysis
-            <span>→</span>
+            <ArrowRight size={14} />
           </button>
-          <button className="target-btn-back" onClick={onBack}>
-            ← Back
-          </button>
-        </motion.div>
+        </div>
 
       </div>
     </div>
