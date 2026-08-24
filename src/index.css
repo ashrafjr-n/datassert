@@ -1,100 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
 /* ─────────────────────────────────────────────
-   DESIGN TOKENS
+   DESIGN TOKENS — Tailwind v4 CSS-first config.
+   See frontend.md for the full palette table and usage rules.
+   Every --color-* below is auto-exposed as a Tailwind utility
+   (bg-paper, text-ink, border-line, etc.) — no tailwind.config.js needed.
 ───────────────────────────────────────────── */
-:root {
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 
-  /* ══════════════════════════════════════════
-     SURFACE LAYER SYSTEM
-     base → elevated → card → overlay → glass
-  ══════════════════════════════════════════ */
-  --surface-base:     #0B0B0B;   /* page background         */
-  --surface-elevated: #121212;   /* slightly lifted surface */
-  --surface-card:     rgba(17,17,17,0.88); /* hero card, modals */
-  --surface-overlay:  rgba(255,255,255,0.02); /* subtle panels  */
-  --surface-glass:    rgba(255,255,255,0.03); /* glass elements  */
+  --color-paper:        #FFFFFF;
+  --color-paper-sunken:  #F6F6F4;
 
-  /* Legacy aliases — kept for backward compat, map to layer system */
-  --bg-primary:   var(--surface-base);
-  --bg-secondary: #0F0F0F;
-  --bg-tertiary:  #141414;
-  --bg-card:      #161616;
-  --bg-glass:     var(--surface-glass);
-  --bg-elevated:  var(--surface-elevated);
+  --color-ink:       #111214;
+  --color-ink-soft:  #53565C;
+  --color-ink-faint: #8B8E94;
 
-  /* ══════════════════════════════════════════
-     TRANSPARENCY SCALE
-  ══════════════════════════════════════════ */
-  --surface-02: rgba(255,255,255,0.02);
-  --surface-03: rgba(255,255,255,0.03);
-  --surface-04: rgba(255,255,255,0.04);
-  --surface-05: rgba(255,255,255,0.05);
-  --surface-06: rgba(255,255,255,0.06);
-  --surface-08: rgba(255,255,255,0.08);
-  --surface-10: rgba(255,255,255,0.10);
+  --color-line:        #E4E4E2;
+  --color-line-strong: #CFCFCC;
 
-  /* Legacy aliases */
-  --white-02: var(--surface-02);
-  --white-03: var(--surface-03);
-  --white-04: var(--surface-04);
-  --white-05: var(--surface-05);
-  --white-06: var(--surface-06);
-  --white-08: var(--surface-08);
-  --white-10: var(--surface-10);
+  --color-gold:      #C7A233;
+  --color-gold-ink:  #8C6D1F;
+  --color-gold-tint: #F7F0DC;
 
-  /* ══════════════════════════════════════════
-     TEXT
-  ══════════════════════════════════════════ */
-  --text-primary:   #FFFFFF;
-  --text-secondary: #B8B8B8;
-  --text-muted:     rgba(255,255,255,0.32);
-
-  /* ══════════════════════════════════════════
-     GOLD SYSTEM
-  ══════════════════════════════════════════ */
-  --gold:      #D4AF37;
-  --gold-warm: #C89B3C;
-  --gold-dark: #b8932a;
-
-  /* ══════════════════════════════════════════
-     BORDERS
-  ══════════════════════════════════════════ */
-  --border-soft:   rgba(255,255,255,0.06);
-  --border-medium: rgba(255,255,255,0.10);
-  --border-gold:   rgba(212,175,55,0.20);
-
-  /* ══════════════════════════════════════════
-     SHADOWS
-  ══════════════════════════════════════════ */
-  --shadow-gold: 0 20px 52px rgba(212,175,55,0.22);
-  --shadow-card: 0 40px 90px rgba(0,0,0,0.55);
-
-  /* ══════════════════════════════════════════
-     STATUS
-  ══════════════════════════════════════════ */
-  --success: #4ade80;
-  --warning: #f59e0b;
-
-  /* ══════════════════════════════════════════
-     LAYOUT
-  ══════════════════════════════════════════ */
-  --container-width:   1400px;
-  --container-padding: 48px;
-
-  /* ══════════════════════════════════════════
-     RADIUS
-  ══════════════════════════════════════════ */
-  --radius-card:   20px;
-  --radius-button: 13px;
+  --color-success:      #1F8A55;
+  --color-success-tint: #E6F4EC;
+  --color-warning:      #B7791F;
+  --color-warning-tint: #FBF0DD;
+  --color-critical:      #C13B3B;
+  --color-critical-tint: #FBE9E9;
+  --color-info:      #2563A6;
+  --color-info-tint: #E8F1FA;
 }
 
-/* ── Hard reset ── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+/* ── Base ── */
 html, body, #root {
   height: 100%;
   width: 100%;
@@ -105,33 +46,33 @@ html {
 }
 
 body {
-  background: var(--surface-base);
-  color: var(--text-primary);
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
-/* ── Scrollbar ── */
+/* ── Scrollbar (gold-tinted, matches the accent rule) ── */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--surface-base);
+  background: var(--color-paper);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(212,175,55,0.25);
-  border-radius: 3px;
+  background: var(--color-line-strong);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212,175,55,0.45);
+  background: var(--color-gold);
 }
 
 /* ── Selection ── */
 ::selection {
-  background: rgba(212,175,55,0.22);
-  color: white;
+  background: var(--color-gold-tint);
+  color: var(--color-ink);
 }
 
 button {
