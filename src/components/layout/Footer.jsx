@@ -1,4 +1,4 @@
-import { Github } from "lucide-react";
+import { GitFork } from "lucide-react";
 
 function Footer() {
   const year = new Date().getFullYear();
@@ -14,7 +14,7 @@ function Footer() {
           aria-label="GitHub repository"
           className="text-ink-faint transition-colors hover:text-ink"
         >
-          <Github size={18} />
+          <GitFork size={18} />
         </a>
       </div>
     </footer>
