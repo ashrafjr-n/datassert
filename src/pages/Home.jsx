@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Papa from "papaparse";
@@ -7,7 +7,7 @@ import {
   FlaskConical, Binary, ShieldCheck, Scale,
   Workflow, ListChecks, Network, Gauge, Split, Lightbulb,
   ScanSearch, TrendingUp, ArrowRight, BarChart3, PieChart,
-  Laptop, FileWarning, CheckCircle2,
+  Laptop, FileWarning, CheckCircle2, Target, Boxes,
 } from "lucide-react";
 
 import Header from "../components/layout/Header.jsx";
@@ -93,6 +93,16 @@ const PROCESS_TOPICS = [
     icon: Split,
     title: "Class balance",
     text: "For a classification target, the majority-to-minority ratio is compared against a 3× threshold (or an 80% majority share) to flag imbalance. The minority class's absolute row count is called out separately — under 10 rows reads as critically few no matter what the percentage says.",
+  },
+  {
+    icon: Target,
+    title: "Target auto-detection",
+    text: "When no target is chosen, the column is guessed in four passes: an exact name match against common labels (target, label, class, outcome, churn, survived, y, output…), then a binary column (0/1, yes/no, true/false — the last one found, since targets tend to sit at the end), then a low-cardinality column scanned from the end (≤5% unique values), and finally the last column in the file as a fallback.",
+  },
+  {
+    icon: Boxes,
+    title: "Feature clusters",
+    text: "Beyond flagging single redundant pairs, columns are grouped: any column correlated at |r| ≥ 0.7 with two or more others is added to a cluster. Three or more clustered columns trigger a dimensionality-reduction suggestion, since dropping one flagged pair at a time misses that they're all measuring roughly the same thing.",
   },
   {
     icon: Lightbulb,
@@ -254,9 +264,9 @@ function validate(file) {
   return null;
 }
 
-function TalkingPointsColumn() {
+const TalkingPointsColumn = forwardRef(function TalkingPointsColumn(_props, ref) {
   return (
-    <aside className="order-2 space-y-6 lg:order-1">
+    <aside ref={ref} className="order-2 space-y-6 lg:order-1">
       <div className="text-[11px] font-semibold uppercase tracking-widest text-ink-faint">Why it's built this way</div>
       {TALKING_POINTS.map((p) => (
         <div key={p.title}>
@@ -269,21 +279,25 @@ function TalkingPointsColumn() {
       ))}
     </aside>
   );
-}
+});
 
-function ProcessTopicsColumn() {
-  const [open, setOpen] = useState(null);
+/* Exactly one topic open at all times (never collapses to nothing) — clicking
+   a row switches which one is open rather than toggling it closed. The box
+   height is synced to match TalkingPointsColumn (see Home()'s ResizeObserver)
+   so the two side columns read as a matched pair regardless of viewport. */
+function ProcessTopicsColumn({ matchHeight }) {
+  const [open, setOpen] = useState(0);
   return (
-    <aside className="order-3 lg:order-3">
-      <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-ink-faint">How the analysis works</div>
-      <div className="divide-y divide-line rounded-xl border border-line">
+    <aside className="order-3 flex flex-col lg:order-3" style={matchHeight ? { height: matchHeight } : undefined}>
+      <div className="mb-3 shrink-0 text-[11px] font-semibold uppercase tracking-widest text-ink-faint">How the analysis works</div>
+      <div className="divide-y divide-line overflow-y-auto rounded-xl border border-line">
         {PROCESS_TOPICS.map((topic, i) => {
           const isOpen = open === i;
           return (
             <div key={topic.title}>
               <button
                 type="button"
-                onClick={() => setOpen(isOpen ? null : i)}
+                onClick={() => setOpen(i)}
                 className="flex w-full items-center gap-2.5 px-4 py-3 text-left"
               >
                 <topic.icon size={15} className="shrink-0 text-ink-faint" />
@@ -320,6 +334,22 @@ function Home() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isParsing,  setIsParsing]  = useState(false);
   const [error,      setError]      = useState(null);
+
+  /* Keeps "How the analysis works" the same height as "Why it's built this
+     way" — both are dynamic-height content, so a fixed Tailwind height would
+     drift the moment either list's copy changes. */
+  const talkingPointsRef = useRef(null);
+  const [matchHeight, setMatchHeight] = useState(null);
+
+  useEffect(() => {
+    const el = talkingPointsRef.current;
+    if (!el) return undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      setMatchHeight(entry.contentRect.height);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleFile = useCallback((file) => {
     if (!file) return;
@@ -365,7 +395,7 @@ function Home() {
       <main className="mx-auto max-w-[1500px] px-6 pb-24 pt-28 sm:px-10 sm:pt-32">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[240px_minmax(0,1fr)_300px] lg:gap-8">
 
-          <TalkingPointsColumn />
+          <TalkingPointsColumn ref={talkingPointsRef} />
 
           {/* Center — intro + upload, pulled close together */}
           <div className="order-1 lg:order-2">
@@ -444,7 +474,7 @@ function Home() {
             </div>
           </div>
 
-          <ProcessTopicsColumn />
+          <ProcessTopicsColumn matchHeight={matchHeight} />
 
         </div>
 
