@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw } from "lucide-react";
 
 import OverviewTab       from "./tabs/OverviewTab.jsx";
 import QualityTab        from "./tabs/QualityTab.jsx";
@@ -121,9 +120,8 @@ function ResultsDashboard({ result, onReset }) {
           <button
             type="button"
             onClick={onReset}
-            className="inline-flex w-1/2 items-center justify-center gap-1.5 rounded-md border border-line px-3 py-2 text-[12.5px] font-medium text-ink-soft transition-colors hover:bg-paper-sunken hover:text-ink"
+            className="inline-flex w-1/2 items-center justify-center whitespace-nowrap rounded-md border border-line px-3 py-2 text-[12.5px] font-medium text-ink-soft transition-colors hover:bg-paper-sunken hover:text-ink"
           >
-            <RotateCcw size={12} />
             New analysis
           </button>
 

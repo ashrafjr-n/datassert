@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 
 /* Fixed, full-width, edge-to-edge — NOT floating/pill-shaped. See frontend.md
    "Header" spec. Shared by every page (Home + the whole /analyze flow). */
@@ -23,10 +22,9 @@ function Header() {
 
         <button
           type="button"
-          className="group inline-flex items-center gap-1.5 rounded-md border border-gold bg-transparent px-4 py-2 text-[13px] font-semibold text-gold-ink transition-colors hover:bg-gold-tint"
+          className="inline-flex items-center rounded-md border border-gold bg-transparent px-4 py-2 text-[13px] font-semibold text-gold-ink transition-colors hover:bg-gold-tint"
         >
           Start for Free
-          <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
         </button>
 
       </div>
