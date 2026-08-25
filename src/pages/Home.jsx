@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import Header from "../components/layout/Header.jsx";
+import Footer from "../components/layout/Footer.jsx";
 import { setPendingDataset } from "../lib/datasetHandoff.js";
 
 const MAX_SIZE_MB = 40;
@@ -449,6 +450,8 @@ function Home() {
 
         <DatasetJourneySection />
       </main>
+
+      <Footer />
     </div>
   );
 }
