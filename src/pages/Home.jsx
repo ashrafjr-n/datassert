@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import Papa from "papaparse";
 import {
   UploadCloud, LoaderCircle, TriangleAlert, ChevronDown,
@@ -139,11 +140,22 @@ function ProcessTopicsColumn() {
                 <span className="flex-1 text-[13px] font-medium text-ink">{topic.title}</span>
                 <ChevronDown size={14} className={`shrink-0 text-ink-faint transition-transform ${isOpen ? "rotate-180" : ""}`} />
               </button>
-              {isOpen && (
-                <div className="px-4 pb-4 pl-[34px] text-[12.5px] leading-relaxed text-ink-soft">
-                  {topic.text}
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    key="content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4 pl-[34px] text-[12.5px] leading-relaxed text-ink-soft">
+                      {topic.text}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           );
         })}
