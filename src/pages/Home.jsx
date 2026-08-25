@@ -274,7 +274,7 @@ const TalkingPointsColumn = forwardRef(function TalkingPointsColumn(_props, ref)
             <p.icon size={15} className="shrink-0 text-gold-ink" />
             <div className="text-[13px] font-semibold text-ink">{p.title}</div>
           </div>
-          <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">{p.text}</p>
+          <p className="mt-1.5 text-justify text-[12.5px] leading-relaxed text-ink-soft">{p.text}</p>
         </div>
       ))}
     </aside>
