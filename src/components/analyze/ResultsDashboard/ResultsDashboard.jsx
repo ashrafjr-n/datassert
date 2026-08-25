@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RotateCcw } from "lucide-react";
 
-import StatTile from "../shared/StatTile.jsx";
 import OverviewTab       from "./tabs/OverviewTab.jsx";
 import QualityTab        from "./tabs/QualityTab.jsx";
 import StatisticsTab     from "./tabs/StatisticsTab.jsx";
@@ -30,75 +29,100 @@ function ResultsDashboard({ result, onReset }) {
     ? healthScore.score >= 80 ? "success" : healthScore.score >= 60 ? "warning" : "critical"
     : "ink";
 
+  const stats = [
+    { label: "Rows",           value: meta.rows.toLocaleString() },
+    { label: "Columns",        value: meta.columns },
+    {
+      label: "Missing cells",
+      value: quality.missingCells.toLocaleString(),
+      tone:  quality.missingCells > 0 ? "warning" : "success",
+    },
+    {
+      label: "Duplicate rows",
+      value: quality.duplicatesComputed ? quality.duplicateRows.toLocaleString() : "Skipped",
+      tone:  !quality.duplicatesComputed ? "ink" : quality.duplicateRows > 0 ? "warning" : "success",
+    },
+    { label: "Quality score", value: quality.qualityScore, suffix: "/100" },
+    {
+      label:  "Health score",
+      value:  healthScore?.score ?? quality.qualityScore,
+      suffix: "/100",
+      tone:   healthTone,
+    },
+  ];
+
+  const toneCls = {
+    ink:      "text-ink",
+    success:  "text-success",
+    warning:  "text-warning",
+    critical: "text-critical",
+  };
+
   return (
     <div className="mx-auto max-w-[1400px] px-6 pb-16 pt-8 sm:px-12">
 
-      {/* Scope row */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-5">
-        <div className="text-[13px] text-ink-soft">
-          {meta.target ? (
-            <>Target <span className="font-mono font-medium text-ink">{meta.target}</span> · {meta.datasetType}</>
-          ) : (
-            "No target selected · Exploratory analysis"
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={onReset}
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-soft hover:text-ink"
-        >
-          <RotateCcw size={13} />
-          New analysis
-        </button>
-      </div>
+      {/* Sidebar + content */}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
 
-      {/* KPI strip */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.32 }}
-        className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
-      >
-        <StatTile label="Rows" value={meta.rows.toLocaleString()} />
-        <StatTile label="Columns" value={meta.columns} />
-        <StatTile
-          label="Missing cells"
-          value={quality.missingCells.toLocaleString()}
-          tone={quality.missingCells > 0 ? "warning" : "success"}
-        />
-        <StatTile
-          label="Duplicate rows"
-          value={quality.duplicatesComputed ? quality.duplicateRows.toLocaleString() : "Skipped"}
-          tone={!quality.duplicatesComputed ? "ink" : quality.duplicateRows > 0 ? "warning" : "success"}
-        />
-        <StatTile label="Quality score" value={quality.qualityScore} suffix="/100" />
-        <StatTile
-          label="Health score"
-          value={healthScore?.score ?? quality.qualityScore}
-          suffix="/100"
-          tone={healthTone}
-        />
-      </motion.div>
+        <aside className="overflow-hidden rounded-xl border border-line bg-paper lg:w-[240px] lg:shrink-0">
 
-      {/* Tab nav + content */}
-      <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
-
-        <nav className="flex gap-1 overflow-x-auto border-b border-line pb-2 lg:w-[200px] lg:shrink-0 lg:flex-col lg:gap-0.5 lg:border-b-0 lg:border-r lg:border-line lg:pb-0 lg:pr-4">
-          {tabs.map((tab) => (
+          {/* Scope */}
+          <div className="border-b border-line px-4 py-4">
+            <div className="text-[11px] uppercase tracking-wide text-ink-faint">Scope</div>
+            <div className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
+              {meta.target ? (
+                <>Target <span className="font-mono font-medium text-ink">{meta.target}</span> · {meta.datasetType}</>
+              ) : (
+                "No target selected · Exploratory analysis"
+              )}
+            </div>
             <button
-              key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap rounded-md px-3.5 py-2.5 text-left text-[13px] font-medium transition-colors ${
-                activeTab === tab.id
-                  ? "bg-gold-tint text-gold-ink"
-                  : "text-ink-soft hover:bg-paper-sunken hover:text-ink"
-              }`}
+              onClick={onReset}
+              className="mt-3 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-ink-soft hover:text-ink"
             >
-              {tab.label}
+              <RotateCcw size={12} />
+              New analysis
             </button>
-          ))}
-        </nav>
+          </div>
+
+          {/* KPI stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.32 }}
+            className="divide-y divide-line border-b border-line"
+          >
+            {stats.map((s) => (
+              <div key={s.label} className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-[12.5px] text-ink-faint">{s.label}</span>
+                <span className={`font-mono text-[13px] font-semibold ${toneCls[s.tone] ?? "text-ink"}`}>
+                  {s.value}
+                  {s.suffix && <span className="ml-0.5 text-[11px] font-normal text-ink-faint">{s.suffix}</span>}
+                </span>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Tab nav */}
+          <nav className="flex flex-col gap-0.5 p-2">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`whitespace-nowrap rounded-md px-3.5 py-2.5 text-left text-[13px] font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? "bg-gold-tint text-gold-ink"
+                    : "text-ink-soft hover:bg-paper-sunken hover:text-ink"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+        </aside>
 
         <div className="min-w-0 flex-1">
           <AnimatePresence mode="wait">
