@@ -80,47 +80,46 @@ function ResultsDashboard({ result, onReset }) {
         />
       </motion.div>
 
-      {/* Tab bar */}
-      <div className="mt-6 flex gap-1 overflow-x-auto border-b border-line">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={`relative whitespace-nowrap px-3.5 py-2.5 text-[13px] font-medium transition-colors ${
-              activeTab === tab.id ? "text-ink" : "text-ink-soft hover:text-ink"
-            }`}
-          >
-            {tab.label}
-            {activeTab === tab.id && (
-              <motion.div
-                layoutId="resultsTabIndicator"
-                className="absolute inset-x-0 -bottom-px h-0.5 bg-gold"
-                transition={{ duration: 0.2 }}
-              />
-            )}
-          </button>
-        ))}
-      </div>
+      {/* Tab nav + content */}
+      <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
 
-      {/* Tab content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.22, ease: "easeOut" }}
-          className="pt-6"
-        >
-          {activeTab === "overview"       && <OverviewTab       result={result} />}
-          {activeTab === "quality"        && <QualityTab        result={result} />}
-          {activeTab === "statistics"     && <StatisticsTab     result={result} />}
-          {activeTab === "visualizations" && <VisualizationsTab result={result} />}
-          {activeTab === "relationships"  && <RelationshipsTab  result={result} />}
-          {activeTab === "classbalance"   && <ClassBalanceTab   result={result} />}
-        </motion.div>
-      </AnimatePresence>
+        <nav className="flex gap-1 overflow-x-auto border-b border-line pb-2 lg:w-[200px] lg:shrink-0 lg:flex-col lg:gap-0.5 lg:border-b-0 lg:border-r lg:border-line lg:pb-0 lg:pr-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`whitespace-nowrap rounded-md px-3.5 py-2.5 text-left text-[13px] font-medium transition-colors ${
+                activeTab === tab.id
+                  ? "bg-gold-tint text-gold-ink"
+                  : "text-ink-soft hover:bg-paper-sunken hover:text-ink"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="min-w-0 flex-1">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+            >
+              {activeTab === "overview"       && <OverviewTab       result={result} />}
+              {activeTab === "quality"        && <QualityTab        result={result} />}
+              {activeTab === "statistics"     && <StatisticsTab     result={result} />}
+              {activeTab === "visualizations" && <VisualizationsTab result={result} />}
+              {activeTab === "relationships"  && <RelationshipsTab  result={result} />}
+              {activeTab === "classbalance"   && <ClassBalanceTab   result={result} />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+      </div>
 
     </div>
   );
