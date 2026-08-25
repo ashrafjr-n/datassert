@@ -131,69 +131,8 @@ function DatasetJourneySection() {
   return (
     <section className="mt-20 border-t border-line pt-14">
 
-      {/* What happens to your dataset? */}
-      <h2 className="text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
-        What happens to your dataset?
-      </h2>
-      <div className="mx-auto mt-8 max-w-5xl">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-0">
-          {PROCESS_FLOW.flatMap((step, i) => {
-            const node = (
-              <div key={`step-${step.title}`} className="flex items-start gap-3 sm:flex-1 sm:flex-col sm:items-center sm:px-2 sm:text-center">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong bg-paper-sunken">
-                  <step.icon size={16} className="text-gold-ink" />
-                </div>
-                <div className="sm:mt-1.5">
-                  <div className="text-[13px] font-semibold text-ink">{step.title}</div>
-                  <div className="mt-0.5 text-[12px] leading-relaxed text-ink-soft">{step.desc}</div>
-                </div>
-              </div>
-            );
-            if (i === PROCESS_FLOW.length - 1) return [node];
-            const arrow = (
-              <div key={`arrow-${step.title}`} className="flex items-center pl-[17px] sm:justify-center sm:pl-0 sm:pt-4">
-                <ArrowRight size={14} className="shrink-0 rotate-90 text-ink-faint sm:rotate-0" />
-              </div>
-            );
-            return [node, arrow];
-          })}
-        </div>
-      </div>
-
-      {/* One dataset. Six diagnostic layers. */}
-      <h2 className="mt-16 text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
-        One dataset. Six diagnostic layers.
-      </h2>
-      <div className="mx-auto mt-8 grid max-w-5xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {DIAGNOSTIC_LAYERS.map((layer) => (
-          <div key={layer.title} className="rounded-lg border border-line px-4 py-3.5">
-            <div className="flex items-center gap-2">
-              <layer.icon size={15} className="shrink-0 text-gold-ink" />
-              <div className="text-[13px] font-semibold text-ink">{layer.title}</div>
-            </div>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">{layer.text}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Built for trustworthy analysis */}
-      <h2 className="mt-16 text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
-        Built for trustworthy analysis
-      </h2>
-      <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2">
-        {TRUST_POINTS.map((point) => (
-          <div key={point.title} className="rounded-lg border border-line px-4 py-3.5">
-            <div className="flex items-center gap-2">
-              <point.icon size={15} className="shrink-0 text-gold-ink" />
-              <div className="text-[13px] font-semibold text-ink">{point.title}</div>
-            </div>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">{point.text}</p>
-          </div>
-        ))}
-      </div>
-
       {/* From raw CSV to clear decisions */}
-      <h2 className="mt-16 text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+      <h2 className="text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
         From raw CSV to clear decisions
       </h2>
       <div className="mx-auto mt-8 max-w-3xl rounded-xl border border-line bg-paper-sunken p-6 sm:p-8">
@@ -236,6 +175,72 @@ function DatasetJourneySection() {
         <p className="mt-6 text-center text-[15px] font-medium text-ink">
           Stop staring at columns. Start understanding your dataset.
         </p>
+      </div>
+
+      {/* What happens to your dataset? */}
+      <h2 className="mt-16 text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+        What happens to your dataset?
+      </h2>
+      <div className="mx-auto mt-8 max-w-5xl">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-0">
+          {PROCESS_FLOW.flatMap((step, i) => {
+            const node = (
+              <div key={`step-${step.title}`} className="flex items-start gap-3 sm:flex-1 sm:flex-col sm:items-center sm:px-2 sm:text-center">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong bg-paper-sunken">
+                  <step.icon size={16} className="text-gold-ink" />
+                </div>
+                <div className="sm:mt-1.5">
+                  <div className="text-[13px] font-semibold text-ink">{step.title}</div>
+                  <div className="mt-0.5 text-[12px] leading-relaxed text-ink-soft">{step.desc}</div>
+                </div>
+              </div>
+            );
+            if (i === PROCESS_FLOW.length - 1) return [node];
+            const arrow = (
+              <div key={`arrow-${step.title}`} className="flex items-center pl-[17px] sm:justify-center sm:pl-0 sm:pt-4">
+                <ArrowRight size={14} className="shrink-0 rotate-90 text-ink-faint sm:rotate-0" />
+              </div>
+            );
+            return [node, arrow];
+          })}
+        </div>
+      </div>
+
+      {/* One dataset. Six diagnostic layers. / Built for trustworthy analysis — side by side */}
+      <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-10 lg:grid-cols-2">
+        <div>
+          <h2 className="text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl lg:text-left">
+            One dataset. Six diagnostic layers.
+          </h2>
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {DIAGNOSTIC_LAYERS.map((layer) => (
+              <div key={layer.title} className="rounded-lg border border-line px-4 py-3.5">
+                <div className="flex items-center gap-2">
+                  <layer.icon size={15} className="shrink-0 text-gold-ink" />
+                  <div className="text-[13px] font-semibold text-ink">{layer.title}</div>
+                </div>
+                <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">{layer.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl lg:text-left">
+            Built for trustworthy analysis
+          </h2>
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {TRUST_POINTS.map((point) => (
+              <div key={point.title} className="rounded-lg border border-line px-4 py-3.5">
+                <div className="flex items-center gap-2">
+                  <point.icon size={15} className="shrink-0 text-gold-ink" />
+                  <div className="text-[13px] font-semibold text-ink">{point.title}</div>
+                </div>
+                <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">{point.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
     </section>
