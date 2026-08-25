@@ -110,7 +110,7 @@ function CorrelationHeatmap({ relationships }) {
   const showValue = cellSize >= 42;
 
   return (
-    <SectionCard title="Correlation heatmap">
+    <SectionCard title="Correlation heatmap" className="relative">
       <div className="overflow-x-auto">
         <div className="flex" style={{ paddingLeft: labelW }}>
           {cols.map((col) => (
@@ -159,14 +159,15 @@ function CorrelationHeatmap({ relationships }) {
               <span className="text-[10px] text-ink-faint">{l.label}</span>
             </div>
           ))}
-          {tip && (
-            <div className="ml-auto rounded-md bg-paper-sunken px-3 py-1 text-[12px] text-ink-soft">
-              <strong className="text-ink">{tip.rowCol}</strong> &harr; <strong className="text-ink">{tip.colCol}</strong>
-              {" — r = "}<strong className="font-mono text-ink">{tip.val.toFixed(3)}</strong>
-            </div>
-          )}
         </div>
       </div>
+
+      {tip && (
+        <div className="pointer-events-none absolute right-5 top-5 z-10 rounded-md border border-line bg-paper px-3 py-1.5 text-[12px] text-ink-soft shadow-sm">
+          <strong className="text-ink">{tip.rowCol}</strong> &harr; <strong className="text-ink">{tip.colCol}</strong>
+          {" — r = "}<strong className="font-mono text-ink">{tip.val.toFixed(3)}</strong>
+        </div>
+      )}
     </SectionCard>
   );
 }
