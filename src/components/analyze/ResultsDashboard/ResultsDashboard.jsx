@@ -64,65 +64,70 @@ function ResultsDashboard({ result, onReset }) {
       {/* Sidebar + content */}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
 
-        <aside className="overflow-hidden rounded-xl border border-line bg-paper lg:w-[240px] lg:shrink-0">
+        <div className="flex flex-col items-center gap-3 lg:sticky lg:top-20 lg:w-[240px] lg:shrink-0">
 
-          {/* Scope */}
-          <div className="border-b border-line px-4 py-4">
-            <div className="text-[11px] uppercase tracking-wide text-ink-faint">Scope</div>
-            <div className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
-              {meta.target ? (
-                <>Target <span className="font-mono font-medium text-ink">{meta.target}</span> · {meta.datasetType}</>
-              ) : (
-                "No target selected · Exploratory analysis"
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={onReset}
-              className="mt-3 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-ink-soft hover:text-ink"
-            >
-              <RotateCcw size={12} />
-              New analysis
-            </button>
-          </div>
+          <aside className="w-full overflow-hidden rounded-xl border border-line bg-paper">
 
-          {/* KPI stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.32 }}
-            className="divide-y divide-line border-b border-line"
-          >
-            {stats.map((s) => (
-              <div key={s.label} className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-[12.5px] text-ink-faint">{s.label}</span>
-                <span className={`font-mono text-[13px] font-semibold ${toneCls[s.tone] ?? "text-ink"}`}>
-                  {s.value}
-                  {s.suffix && <span className="ml-0.5 text-[11px] font-normal text-ink-faint">{s.suffix}</span>}
-                </span>
+            {/* Scope */}
+            <div className="border-b border-line px-4 py-4">
+              <div className="text-[11px] uppercase tracking-wide text-ink-faint">Scope</div>
+              <div className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
+                {meta.target ? (
+                  <>Target <span className="font-mono font-medium text-ink">{meta.target}</span> · {meta.datasetType}</>
+                ) : (
+                  "No target selected · Exploratory analysis"
+                )}
               </div>
-            ))}
-          </motion.div>
+            </div>
 
-          {/* Tab nav */}
-          <nav className="flex flex-col gap-0.5 p-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`whitespace-nowrap rounded-md px-3.5 py-2.5 text-left text-[13px] font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-gold-tint text-gold-ink"
-                    : "text-ink-soft hover:bg-paper-sunken hover:text-ink"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+            {/* KPI stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.32 }}
+              className="divide-y divide-line border-b border-line"
+            >
+              {stats.map((s) => (
+                <div key={s.label} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-[12.5px] text-ink-faint">{s.label}</span>
+                  <span className={`font-mono text-[13px] font-semibold ${toneCls[s.tone] ?? "text-ink"}`}>
+                    {s.value}
+                    {s.suffix && <span className="ml-0.5 text-[11px] font-normal text-ink-faint">{s.suffix}</span>}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
 
-        </aside>
+            {/* Tab nav */}
+            <nav className="flex flex-col gap-0.5 p-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`whitespace-nowrap rounded-md px-3.5 py-2.5 text-left text-[13px] font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? "bg-gold-tint text-gold-ink"
+                      : "text-ink-soft hover:bg-paper-sunken hover:text-ink"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+
+          </aside>
+
+          <button
+            type="button"
+            onClick={onReset}
+            className="inline-flex w-1/2 items-center justify-center gap-1.5 rounded-md border border-line px-3 py-2 text-[12.5px] font-medium text-ink-soft transition-colors hover:bg-paper-sunken hover:text-ink"
+          >
+            <RotateCcw size={12} />
+            New analysis
+          </button>
+
+        </div>
 
         <div className="min-w-0 flex-1">
           <AnimatePresence mode="wait">
