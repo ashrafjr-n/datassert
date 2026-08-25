@@ -15,9 +15,7 @@ function Header() {
           onClick={() => navigate("/")}
           className="flex items-center gap-2.5"
         >
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gold text-sm font-bold text-paper">
-            D
-          </span>
+          <img src="/datassert-logo.png" alt="Datassert" className="h-8 w-8 object-contain" />
           <span className="text-[15px] font-semibold tracking-tight text-ink">
             Datassert
           </span>
