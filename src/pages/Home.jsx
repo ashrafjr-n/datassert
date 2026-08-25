@@ -6,6 +6,8 @@ import {
   UploadCloud, LoaderCircle, TriangleAlert, ChevronDown,
   FlaskConical, Binary, ShieldCheck, Scale,
   Workflow, ListChecks, Network, Gauge, Split, Lightbulb,
+  ScanSearch, TrendingUp, ArrowRight, BarChart3, PieChart,
+  Laptop, FileWarning, CheckCircle2,
 } from "lucide-react";
 
 import Header from "../components/layout/Header.jsx";
@@ -97,6 +99,148 @@ const PROCESS_TOPICS = [
     text: "Every finding becomes a prioritized action — drop a column, impute a specific way, investigate an outlier — tagged by category (Data Cleaning, Feature Selection, Feature Engineering, Modeling, Data Integrity) and priority, not a generic checklist.",
   },
 ];
+
+/* Below-the-fold section: dense, document-like recap of the tool's process,
+   scope, and guarantees — an academic reference page, not a marketing scroll.
+   See frontend.md typography scale: nothing here needs hero-sized type. */
+const PROCESS_FLOW = [
+  { icon: UploadCloud,  title: "Upload CSV", desc: "Drop your CSV directly in the browser." },
+  { icon: ScanSearch,   title: "Detect",     desc: "Automatically identify targets, numeric, categorical & ID columns." },
+  { icon: FlaskConical, title: "Analyze",    desc: "Check quality, relationships, class balance and more." },
+  { icon: Lightbulb,    title: "Understand", desc: "Get actionable insights and recommendations." },
+  { icon: TrendingUp,   title: "Improve",    desc: "Apply the recommendations to raise the health score." },
+];
+
+const DIAGNOSTIC_LAYERS = [
+  { icon: ShieldCheck, title: "Quality",         text: "Missing values, duplicate rows, and a weighted quality score." },
+  { icon: BarChart3,   title: "Statistics",      text: "Per-column mean, std, skewness, kurtosis and distribution shape." },
+  { icon: PieChart,    title: "Visualizations",  text: "Histograms and distribution charts for every column." },
+  { icon: Network,     title: "Relationships",   text: "A full correlation matrix with multicollinearity and leakage checks." },
+  { icon: Split,       title: "Class Balance",   text: "Majority-to-minority ratio and minority-class row counts." },
+  { icon: Lightbulb,   title: "Recommendations", text: "Prioritized, actionable fixes tied to what was actually found." },
+];
+
+const TRUST_POINTS = [
+  { icon: Laptop,       title: "Everything runs locally.",         text: "Your dataset never leaves the browser." },
+  { icon: FlaskConical, title: "Validated calculations.",          text: "Statistics are checked against reference implementations." },
+  { icon: Binary,       title: "Role detection based on data.",    text: "Columns are classified from their values, not just their names." },
+  { icon: Gauge,        title: "No black-box score.",              text: "The health score is broken into Quality, Structure, Relationships and Target Readiness." },
+];
+
+function DatasetJourneySection() {
+  return (
+    <section className="mt-20 border-t border-line pt-14">
+
+      {/* What happens to your dataset? */}
+      <h2 className="text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+        What happens to your dataset?
+      </h2>
+      <div className="mx-auto mt-8 max-w-5xl">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-0">
+          {PROCESS_FLOW.flatMap((step, i) => {
+            const node = (
+              <div key={`step-${step.title}`} className="flex items-start gap-3 sm:flex-1 sm:flex-col sm:items-center sm:px-2 sm:text-center">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong bg-paper-sunken">
+                  <step.icon size={16} className="text-gold-ink" />
+                </div>
+                <div className="sm:mt-1.5">
+                  <div className="text-[13px] font-semibold text-ink">{step.title}</div>
+                  <div className="mt-0.5 text-[12px] leading-relaxed text-ink-soft">{step.desc}</div>
+                </div>
+              </div>
+            );
+            if (i === PROCESS_FLOW.length - 1) return [node];
+            const arrow = (
+              <div key={`arrow-${step.title}`} className="flex items-center pl-[17px] sm:justify-center sm:pl-0 sm:pt-4">
+                <ArrowRight size={14} className="shrink-0 rotate-90 text-ink-faint sm:rotate-0" />
+              </div>
+            );
+            return [node, arrow];
+          })}
+        </div>
+      </div>
+
+      {/* One dataset. Six diagnostic layers. */}
+      <h2 className="mt-16 text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+        One dataset. Six diagnostic layers.
+      </h2>
+      <div className="mx-auto mt-8 grid max-w-5xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {DIAGNOSTIC_LAYERS.map((layer) => (
+          <div key={layer.title} className="rounded-lg border border-line px-4 py-3.5">
+            <div className="flex items-center gap-2">
+              <layer.icon size={15} className="shrink-0 text-gold-ink" />
+              <div className="text-[13px] font-semibold text-ink">{layer.title}</div>
+            </div>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">{layer.text}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Built for trustworthy analysis */}
+      <h2 className="mt-16 text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+        Built for trustworthy analysis
+      </h2>
+      <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2">
+        {TRUST_POINTS.map((point) => (
+          <div key={point.title} className="rounded-lg border border-line px-4 py-3.5">
+            <div className="flex items-center gap-2">
+              <point.icon size={15} className="shrink-0 text-gold-ink" />
+              <div className="text-[13px] font-semibold text-ink">{point.title}</div>
+            </div>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">{point.text}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* From raw CSV to clear decisions */}
+      <h2 className="mt-16 text-center text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+        From raw CSV to clear decisions
+      </h2>
+      <div className="mx-auto mt-8 max-w-3xl rounded-xl border border-line bg-paper-sunken p-6 sm:p-8">
+        <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-center sm:gap-8">
+
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-line-strong bg-paper">
+              <FileWarning size={26} className="text-ink-faint" />
+            </div>
+            <div className="font-mono text-[13px] text-ink-soft">messy.csv</div>
+          </div>
+
+          <ArrowRight size={20} className="rotate-90 shrink-0 text-ink-faint sm:rotate-0" />
+
+          <div className="w-full max-w-xs rounded-xl border border-line bg-paper p-4">
+            <div className="flex items-center justify-between border-b border-line pb-2.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Health Score</span>
+              <span className="font-mono text-lg font-semibold text-success">
+                92<span className="text-xs font-normal text-ink-faint">/100</span>
+              </span>
+            </div>
+            <div className="mt-3 space-y-2 text-[12.5px] text-ink-soft">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={13} className="shrink-0 text-gold-ink" />
+                Top predictor: <span className="font-mono text-ink">eat-well?</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={13} className="shrink-0 text-success" />
+                No missing values
+              </div>
+              <div className="flex items-center gap-2">
+                <Lightbulb size={13} className="shrink-0 text-warning" />
+                Drop ID before training
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <p className="mt-6 text-center text-[15px] font-medium text-ink">
+          Stop staring at columns. Start understanding your dataset.
+        </p>
+      </div>
+
+    </section>
+  );
+}
 
 function validate(file) {
   if (!file.name.toLowerCase().endsWith(".csv") && file.type !== "text/csv") return "format";
@@ -297,6 +441,8 @@ function Home() {
           <ProcessTopicsColumn />
 
         </div>
+
+        <DatasetJourneySection />
       </main>
     </div>
   );
