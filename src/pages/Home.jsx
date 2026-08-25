@@ -212,7 +212,7 @@ function Home() {
     <div className="min-h-screen bg-paper text-ink">
       <Header />
 
-      <main className="mx-auto min-h-[160vh] max-w-[1500px] px-6 pb-24 pt-28 sm:px-10 sm:pt-32">
+      <main className="mx-auto max-w-[1500px] px-6 pb-24 pt-28 sm:px-10 sm:pt-32">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[240px_minmax(0,1fr)_300px] lg:gap-8">
 
           <TalkingPointsColumn />
